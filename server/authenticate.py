@@ -17,5 +17,3 @@ def authenticate():
     print("authenticate registered")
     if request.method == 'POST':
         return "post_success"
-    elif request.method == 'GET':
-        return "get_success"
