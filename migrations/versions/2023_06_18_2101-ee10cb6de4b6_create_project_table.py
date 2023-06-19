@@ -27,7 +27,7 @@ def upgrade() -> None:
     op.create_table(
         'PROJECT',
         sa.Column('id', sa.Integer(), primary_key=True, autoincrement=True),
-        sa.Column('title', sa.String(255), nullable=True),
+        sa.Column('title', sa.String(255), nullable=False),
         sa.Column('city', sa.String(255), nullable=False),
         sa.Column('state', sa.String(2), nullable=False),
         sa.Column('zipcode', sa.String(5), nullable=False),
