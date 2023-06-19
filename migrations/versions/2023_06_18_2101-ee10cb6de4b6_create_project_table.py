@@ -25,7 +25,7 @@ class WorkLocation(enum.Enum):
 
 def upgrade() -> None:
     op.create_table(
-        'PROJECT',
+        'project',
         sa.Column('id', sa.Integer(), primary_key=True, autoincrement=True),
         sa.Column('title', sa.String(255), nullable=False),
         sa.Column('city', sa.String(255), nullable=False),
@@ -49,4 +49,4 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_table('PROJECT')
+    op.drop_table('project')
