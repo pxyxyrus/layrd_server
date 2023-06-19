@@ -1,0 +1,5 @@
+[database]
+"hostname"="localhost"
+"database"="block_research"
+"username"="root"
+"password"=""
