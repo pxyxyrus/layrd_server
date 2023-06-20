@@ -13,21 +13,10 @@ auth_bp = Blueprint('authenticate', __name__)
 
 
 
-@auth_bp.route('/register', methods=['POST'])
+@auth_bp.route('/apply', methods=['POST'])
 # expects a user firebase ID token
 def authenticate():
-    print("register")
+    print("apply")
     if request.method == 'POST':
         print(request.json)
         return Response("{'result':'success'}", status=201, mimetype='application/json')
-
-
-
-@auth_bp.route('/authenticate', methods=['POST'])
-# expects a user firebase ID token
-def authenticate():
-    print("authenticate")
-    if request.method == 'POST':
-        print(request.json)
-        return Response("{'result':'success'}", status=201, mimetype='application/json')
-
