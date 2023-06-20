@@ -1,5 +1,5 @@
 from server import db
-import enum
+
 
 db.Model.metadata.reflect(db.engine)
 
