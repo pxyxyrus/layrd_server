@@ -1,5 +1,6 @@
 from server import db
-from server.models import Project, ProjectStatus
+from server.models import Project
+from server.types import ProjectStatus
 
 import json
 
