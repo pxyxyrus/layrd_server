@@ -31,12 +31,12 @@ def upload_project():
         request_data = request.json
         print(request_data)
         proj = Project()
+        for key in request_data.keys():
+            setattr(proj, key, request_data[key])
+        print(proj)
 
         try:
             db.session.begin()
-            for key in request_data.keys():
-                setattr(proj, key, request_data[key])
-            print(proj)
             db.session.add(proj)
         except Exception as e:
             db.session.rollback()
@@ -79,7 +79,7 @@ def complete_project():
     
 
 @project_bp.route('/abort_project', methods=['POST'])
-def upload_project():
+def abort_project():
     print("abort_project")
     if request.method == 'POST':
         request_data = request.json
@@ -99,10 +99,8 @@ def get_project():
     print("get_project")
     if request.method == 'GET':
         print(request.args.get('id'))
-        id = request.args.get('id')
         db.session.begin()
-        projects = db.session.query(Project).filter_by(id=id).all()
-        
+        projects = db.session.query(Project).filter_by(**request.args).all()
         to_dict = lambda obj : obj.as_dict()
         projects = list(map(to_dict, projects))
         print(projects)

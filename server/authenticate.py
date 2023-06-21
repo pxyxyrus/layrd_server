@@ -15,7 +15,7 @@ auth_bp = Blueprint('authenticate', __name__)
 
 @auth_bp.route('/register', methods=['POST'])
 # expects a user firebase ID token
-def authenticate():
+def register():
     print("register")
     if request.method == 'POST':
         print(request.json)

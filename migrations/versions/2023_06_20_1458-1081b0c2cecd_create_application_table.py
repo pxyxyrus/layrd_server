@@ -27,8 +27,8 @@ def upgrade() -> None:
         sa.Column('response', sa.UnicodeText(), nullable=True),
         sa.Column('comments', sa.UnicodeText(), nullable=True),
         sa.Column('resume_link', sa.UnicodeText(), nullable=False),
-        sa.Column('status', sa.Enum(ApplicationStatus), default=ApplicationStatus.applied),
-        sa.Column('staked', sa.Boolean(), default=False)
+        sa.Column('status', sa.Enum(ApplicationStatus), default=ApplicationStatus.applied, server_default=sa.text("'applied'")),
+        sa.Column('staked', sa.Boolean(), default=False, server_default=sa.text('FALSE'))
     )
     op.create_unique_constraint("one_proj_app_per_user", "application", ["project_id", "owner_user_id"])
 
