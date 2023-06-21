@@ -1,35 +1,35 @@
 import enum
     
 class RecruitmentType(enum.Enum):
-    find_mentor=1
-    find_mentee=2
-    find_team=3
+    find_mentor = 'find_mentor'
+    find_mentee = 'find_mentee'
+    find_team = 'find_team'
 
 class ApplicationType(enum.Enum):
-    rolling=1
-    due_date=2
+    rolling ='rolling'
+    due_date = 'due_date'
 
 class WorkLocation(enum.Enum):
-    on_site = 1
-    remote = 2
-    hybrid = 3
+    on_site = 'onsite'
+    remote = 'remote'
+    hybrid = 'hybrid'
 
 class ProjectStatus(enum.Enum):
-    open = 1 # project is taking applicants
-    withdrawn = 2 # project was withdrawn
-    closed = 3 # project is no more taking applicants()
-    ongoing = 4 # staking happened
-    successful = 5 # project successfully finished
-    unsuccessful = 6 # project aborted by someone
+    open = 'open' # project is taking applicants
+    withdrawn = 'withdrawn' # project was withdrawn
+    closed = 'closed' # project is no more taking applicants()
+    ongoing = 'ongoing' # staking happened
+    successful = 'successful' # project successfully finished
+    unsuccessful = 'unsuccessful' # project aborted by someone
 
 
 
 
 class ApplicationStatus(enum.Enum):
-    applied = 1
-    accepted = 2
-    rejected = 3
-    closed = 4
+    applied = 'applied'
+    accepted = 'accepted'
+    rejected = 'rejected'
+    closed = 'closed'
 
     
 

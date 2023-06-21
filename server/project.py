@@ -18,6 +18,8 @@ project_bp = Blueprint('project', __name__)
 def change_project_status(request_data, status_to_change):
     db.session.begin()
     projects = db.session.query(Project).filter_by(id=request_data['id']).all()
+    print(status_to_change)
+    print(projects)
     for proj in projects:
         setattr(proj, "status", status_to_change)
     db.session.commit()
@@ -30,11 +32,8 @@ def upload_project():
     if request.method == 'POST':
         request_data = request.json
         print(request_data)
-        proj = Project()
-        for key in request_data.keys():
-            setattr(proj, key, request_data[key])
+        proj = Project(**request_data)
         print(proj)
-
         try:
             db.session.begin()
             db.session.add(proj)
@@ -54,8 +53,9 @@ def withdraw_project():
         request_data = request.json
         print(request_data)
 
+        print(ProjectStatus.withdrawn.value)
         try:
-            change_project_status(request_data, ProjectStatus.withdrawn)
+            change_project_status(request_data, ProjectStatus.withdrawn.value)
             return Response("{'result':'success'}", status=201, mimetype='application/json')
         except Exception as e:
             return Response("{'result':'{}'}".format(e), status=400, mimetype='application/json')
@@ -69,9 +69,8 @@ def complete_project():
     if request.method == 'POST':
         request_data = request.json
         print(request_data)
-
         try:
-            change_project_status(request_data, ProjectStatus.successful)
+            change_project_status(request_data, ProjectStatus.successful.value)
             return Response("{'result':'success'}", status=201, mimetype='application/json')
         except Exception as e:
             return Response("{'result':'{}'}".format(e), status=400, mimetype='application/json')
@@ -86,7 +85,7 @@ def abort_project():
         print(request_data)
 
         try:
-            change_project_status(request_data, ProjectStatus.unsuccessful)
+            change_project_status(request_data, ProjectStatus.unsuccessful.value)
             return Response("{'result':'success'}", status=201, mimetype='application/json')
         except Exception as e:
             return Response("{'result':'{}'}".format(e), status=400, mimetype='application/json')
