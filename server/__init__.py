@@ -29,5 +29,8 @@ def create_app():
     from . import project
     app.register_blueprint(project.project_bp)
 
+    from . import application
+    app.register_blueprint(application.app_bp)
+
     
     return app
