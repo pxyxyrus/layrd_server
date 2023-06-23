@@ -20,9 +20,10 @@ def upgrade() -> None:
     op.create_table(
         'user',
         sa.Column('id', sa.Integer(), primary_key=True, autoincrement=True),
-        sa.Column('first_name', sa.String(255), nullable=False),
-        sa.Column('last_name', sa.String(255), nullable=False),
+        sa.Column('uid', sa.String(40), nullable=False),
         sa.Column('email', sa.String(255), nullable=False),
+        sa.Column('first_name', sa.String(255), nullable=True),
+        sa.Column('last_name', sa.String(255), nullable=True),
         sa.Column('city', sa.String(255), nullable=True),
         sa.Column('state', sa.String(2), nullable=True),
         sa.Column('zipcode', sa.String(5), nullable=True),
