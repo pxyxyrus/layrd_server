@@ -22,7 +22,8 @@ def apply():
 
     if request.method == 'POST':
         request_data = request.json
-        project_application = Application(**request_data)
+        print(request_data['id_token'])
+        project_application = Application(**request_data['application_data'])
         try:
             db.session.begin()
             db.session.add(project_application)
@@ -54,8 +55,8 @@ def get_applications():
 def project_applications():
     print("project_application")
     if request.method == 'POST':
-        print(request.json)
-
+        request_data = request.json
+        print(request_data['id_token'])
         # project owner authentication logic
 
         applications = db.session.query(Application).filter_by(**request.args).all()
@@ -71,7 +72,8 @@ def project_applications():
 def my_applications():
     print("apply")
     if request.method == 'POST':
-        print(request.json)
+        request_data = request.json
+        print(request_data['id_token'])
 
         # application owner check logic
 

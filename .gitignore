@@ -3,6 +3,8 @@ keys
 
 config/dev
 
+**test**
+
 
 .venv
 .zshrc

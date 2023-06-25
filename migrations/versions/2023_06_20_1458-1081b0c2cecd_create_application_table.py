@@ -22,7 +22,7 @@ def upgrade() -> None:
         'application',
         sa.Column('id', sa.Integer(), primary_key=True, autoincrement=True),
         sa.Column('project_id', sa.Integer(), nullable=False),
-        sa.Column('owner_user_id', sa.Integer(), nullable=False),
+        sa.Column('owner_uid', sa.String(40), nullable=False),
         sa.Column('post_date', sa.Integer(), nullable=False),
         sa.Column('response', sa.UnicodeText(), nullable=True),
         sa.Column('comments', sa.UnicodeText(), nullable=True),
@@ -30,7 +30,7 @@ def upgrade() -> None:
         sa.Column('status', sa.Enum(ApplicationStatus), default=ApplicationStatus.applied, server_default=sa.text("'applied'")),
         sa.Column('staked', sa.Boolean(), default=False, server_default=sa.text('FALSE'))
     )
-    op.create_unique_constraint("one_proj_app_per_user", "application", ["project_id", "owner_user_id"])
+    op.create_unique_constraint("one_proj_app_per_user", "application", ["project_id", "owner_uid"])
 
 
 def downgrade() -> None:

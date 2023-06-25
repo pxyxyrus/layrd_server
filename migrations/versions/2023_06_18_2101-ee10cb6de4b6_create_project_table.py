@@ -43,7 +43,7 @@ def upgrade() -> None:
         sa.Column('optional_qualifications', sa.UnicodeText(), nullable=True),
         sa.Column('questions', sa.UnicodeText(), nullable=True),
         sa.Column('notes', sa.UnicodeText(), nullable=False),
-        sa.Column('owner_user_id', sa.Integer(), nullable=False),
+        sa.Column('owner_uid', sa.String(40), nullable=False),
         sa.Column('status', sa.Enum(ProjectStatus), nullable=False, default=ProjectStatus.open, server_default=sa.text("'open'")),
         sa.Column('staked', sa.Boolean(), nullable=False, default=False, server_default=sa.text('FALSE'))
     )

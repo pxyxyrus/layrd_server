@@ -17,16 +17,11 @@ def authenticate_id_token(id_token: str):
         # Token is valid and not revoked.
         uid_cache[decoded_token['uid']] = decoded_token
         return decoded_token
-    except auth.RevokedIdTokenError:
+    except (auth.RevokedIdTokenError, auth.UserDisabledError, auth.InvalidIdTokenError) as e:
         # Token revoked, inform the user to reauthenticate or signOut().
-        pass
-    except auth.UserDisabledError:
-        # Token belongs to a disabled user record.
-        pass
-    except auth.InvalidIdTokenError:
-        # Token is invalid
-        pass
+        return {'error' : True, 'error_code': 'reauthenticate', 'error_message': e.default_message}
 
+        
 
 
 

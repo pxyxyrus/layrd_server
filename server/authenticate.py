@@ -18,7 +18,6 @@ def register_user():
     if request.method == 'POST':
         request_data = request.json
         print(request_data['id_token'])
-
         user_info = firebase_helper.authenticate_id_token(request_data['id_token'])
         print(user_info)
         user = User(
@@ -46,7 +45,9 @@ def update_user():
     print("update_user")
     if request.method == 'POST':
         request_data = request.json
-        print(request_data)
+        print(request_data['id_token'])
+        user_info = firebase_helper.authenticate_id_token(request_data['id_token'])
+        print(user_info)
         try:
             db.session.begin()
             users = db.session.query(User).filter_by(id=request_data['id']).all()
@@ -61,12 +62,4 @@ def update_user():
             return Response("{'result':'success'}", status=201, mimetype='application/json')
         
 
-
-@auth_bp.route('/authenticate_user', methods=['POST'])
-# expects a user firebase ID token
-def authenticate_user():
-    print("authenticate_user")
-    if request.method == 'POST':
-        print(request.json)
-        return Response("{'result':'success'}", status=201, mimetype='application/json')
 
