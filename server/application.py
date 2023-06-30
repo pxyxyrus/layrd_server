@@ -68,7 +68,6 @@ def project_applications():
 
 
 @app_bp.route('/my_applications', methods=['POST'])
-# expects a user firebase ID token
 def my_applications():
     print("apply")
     if request.method == 'POST':
@@ -82,3 +81,21 @@ def my_applications():
         applications = list(map(to_dict, applications))
         print(applications)
         return Response(json.dumps(applications, indent=4, sort_keys=True, default=str), status=201, mimetype='application/json')
+    
+
+
+@app_bp.route('/select_applications', methods=['POST'])
+def select_application():
+    print(select_application)
+    if request.method == 'POST':
+        request_data = request.json
+        print(request_data['id_token'])
+
+        # application owner check logic
+
+        applications = db.session.query(Application).filter_by(**request.args).all()
+        to_dict = lambda obj : obj.as_dict()
+        applications = list(map(to_dict, applications))
+        print(applications)
+        return Response(json.dumps(applications, indent=4, sort_keys=True, default=str), status=201, mimetype='application/json')
+    
