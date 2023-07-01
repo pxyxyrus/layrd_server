@@ -1,3 +1,19 @@
+```
+pip install pipx
+```
+
+
+```
+pipx install virtual env
+```
+
+
+Create virtual env
+```
+virtualenv .venv
+```
+
+
 
 migration
 

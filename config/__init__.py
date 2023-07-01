@@ -1,5 +1,8 @@
 import toml
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 server_config = os.environ.get("SERVER_CONFIG")
 

@@ -21,8 +21,10 @@ google-cloud-storage==2.10.0
 google-crc32c==1.5.0
 google-resumable-media==2.5.0
 googleapis-common-protos==1.59.1
+greenlet==2.0.2
 grpcio==1.56.0
 grpcio-status==1.56.0
+gunicorn==20.1.0
 httplib2==0.22.0
 idna==3.4
 itsdangerous==2.1.2
@@ -38,6 +40,7 @@ pycparser==2.21
 PyJWT==2.7.0
 PyMySQL==1.1.0
 pyparsing==3.1.0
+python-dotenv==1.0.0
 requests==2.31.0
 rsa==4.9
 six==1.16.0
