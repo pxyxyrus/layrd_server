@@ -1,5 +1,6 @@
 import firebase_admin
 from firebase_admin import (credentials, auth)
+import json
 
 
 cred = credentials.Certificate('./keys/block_research_key.json')
@@ -17,9 +18,17 @@ def authenticate_id_token(id_token: str):
         # Token is valid and not revoked.
         uid_cache[decoded_token['uid']] = decoded_token
         return decoded_token
-    except (auth.RevokedIdTokenError, auth.UserDisabledError, auth.InvalidIdTokenError) as e:
+    except (auth.RevokedIdTokenError, auth.InvalidIdTokenError) as e:
         # Token revoked, inform the user to reauthenticate or signOut().
-        return {'error' : True, 'error_code': 'reauthenticate', 'error_message': e.default_message}
+        raise Exception({'error_code': 'reauthenticate',  'error_message': e.default_message}) from None
+    except (auth.UserDisabledError) as e:
+        raise Exception({'error_code': 'user_disabled', 'error_message': e.default_message}) from None
+    except Exception as e:
+        # TODO logging needed, including stacktrace
+        raise Exception({
+                'error_code': 'reauthenticate',
+                'error_message': "internal_error" if hasattr(e, "default_message") else getattr(e, "default_message")
+            }) from None
 
         
 

@@ -1,12 +1,11 @@
 from server import db
 from server.models import Project, Application
 from server.types import ProjectStatus, ApplicationStatus
-
 from flask import (
     Blueprint, Response, make_response, flash, g, redirect, render_template, request, session, url_for
 )
-
 import json
+from server.util import *
 
 app_bp = Blueprint('application', __name__)
 
@@ -15,11 +14,10 @@ app_bp = Blueprint('application', __name__)
 
 
 
-@app_bp.route('/apply', methods=['POST'])
+@app_bp.route('/submit', methods=['POST'])
 # expects a user firebase ID token
 def apply():
     print("apply")
-
     if request.method == 'POST':
         request_data = request.json
         print(request_data['id_token'])
@@ -29,62 +27,31 @@ def apply():
             db.session.add(project_application)
         except Exception as e:
             db.session.rollback()
-            return Response("{'result':'{}'}".format(e), status=400, mimetype='application/json')
+            return create_json_error_response(e.args[0], status_code=400)
         else:
             db.session.commit()
-            return Response("{'result':'success'}", status=201, mimetype='application/json')
+            return create_json_response('', 201)
 
 
 # debug functionality
-@app_bp.route('/get_applications', methods=['GET'])
+@app_bp.route('/get', methods=['POST'])
 # expects a user firebase ID token
 def get_applications():
     print("apply")
-    if request.method == 'GET':
+    if request.method == 'POST':
         print(request.json)
-        applications = db.session.query(Application).filter_by(**request.args).all()
-        to_dict = lambda obj : obj.as_dict()
-        applications = list(map(to_dict, applications))
-        print(applications)
-        return Response("{'result':'success'}", status=201, mimetype='application/json')
-
-
-
-@app_bp.route('/project_applications', methods=['POST'])
-# expects a user firebase ID token
-def project_applications():
-    print("project_application")
-    if request.method == 'POST':
         request_data = request.json
-        print(request_data['id_token'])
-        # project owner authentication logic
-
-        applications = db.session.query(Application).filter_by(**request.args).all()
-        to_dict = lambda obj : obj.as_dict()
-        applications = list(map(to_dict, applications))
-        print(applications)
-        return Response(json.dumps(applications, indent=4, sort_keys=True, default=str), status=201, mimetype='application/json')
+        applications = db.session.query(Application).filter_by(
+            # TODO : add constraints
+        ).all()
+        response_data = query_result_to_json_str(applications)
+        return create_json_response(response_data)
 
 
 
-@app_bp.route('/my_applications', methods=['POST'])
-def my_applications():
-    print("apply")
-    if request.method == 'POST':
-        request_data = request.json
-        print(request_data['id_token'])
-
-        # application owner check logic
-
-        applications = db.session.query(Application).filter_by(**request.args).all()
-        to_dict = lambda obj : obj.as_dict()
-        applications = list(map(to_dict, applications))
-        print(applications)
-        return Response(json.dumps(applications, indent=4, sort_keys=True, default=str), status=201, mimetype='application/json')
-    
 
 
-@app_bp.route('/select_applications', methods=['POST'])
+@app_bp.route('/select', methods=['POST'])
 def select_application():
     print(select_application)
     if request.method == 'POST':
@@ -92,10 +59,18 @@ def select_application():
         print(request_data['id_token'])
 
         # application owner check logic
+        try:
+            db.session.begin()
+            applications = db.session.query(Application).filter_by(
+                # TODO : add constraints
+            ).all()
+            application = applications[0]
+            # TODO : change application to selected state
+        except Exception as e:
+            db.session.rollback()
+            return create_json_error_response(e.args[0], status_code=400)
+        else:
+            db.session.commit()
+            return create_json_response('', 201)
 
-        applications = db.session.query(Application).filter_by(**request.args).all()
-        to_dict = lambda obj : obj.as_dict()
-        applications = list(map(to_dict, applications))
-        print(applications)
-        return Response(json.dumps(applications, indent=4, sort_keys=True, default=str), status=201, mimetype='application/json')
     

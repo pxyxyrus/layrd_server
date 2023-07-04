@@ -21,18 +21,15 @@ def create_app():
     from . import models
 
     # a simple page that says hello
-    @app.route('/hello')
-    def hello():
-        return 'Hello, World!'
     
-    from . import authenticate
-    app.register_blueprint(authenticate.auth_bp)
+    from . import user
+    app.register_blueprint(user.user_bp, url_prefix='/user')
 
     from . import project
-    app.register_blueprint(project.project_bp)
+    app.register_blueprint(project.project_bp, url_prefix='/project')
 
     from . import application
-    app.register_blueprint(application.app_bp)
+    app.register_blueprint(application.app_bp, url_prefix='/application')
 
     
     return app
