@@ -45,7 +45,7 @@ def get_applications():
             applications = db.session.query(Application).filter_by(
                 # TODO : add constraints
             ).all()
-            response_data = query_result_to_json_str(applications)
+            response_data = query_result_to_json(applications)
             return create_json_response(response_data)
         except Exception as e:
             db.session.rollback()

@@ -98,7 +98,7 @@ def get_project():
         print(request.args.get('id'))
         db.session.begin()
         projects = db.session.query(Project).filter_by(**request.args).all()
-        return create_json_response(query_result_to_json_str(projects))
+        return create_json_response(query_result_to_json(projects))
 
 
 

@@ -81,4 +81,4 @@ def get_user_info():
             return create_json_error_response(e.args[0])
         else:
             db.session.commit()
-            return create_json_response(query_result_to_json_str(users))
+            return create_json_response(query_result_to_json(users))

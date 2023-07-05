@@ -6,10 +6,10 @@ from server.models import RootModel
 
 
 
-def query_result_to_json_str(query_results: list[RootModel]):
-    to_dict = lambda obj : obj.as_dict()
+def query_result_to_json(query_results: list[RootModel]):
+    to_dict = lambda obj : obj.to_dict()
     query_results = list(map(to_dict, query_results))
-    return json.dumps(query_results, indent=4, sort_keys=True, default=str)
+    return query_results
 
 # expects data to be a list of json objects
 def create_json_response(data, success: bool=True, status_code: int = 200):
