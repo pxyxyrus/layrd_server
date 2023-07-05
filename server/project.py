@@ -90,16 +90,6 @@ def abort_project():
 
 
 
-@project_bp.route('/get', methods=['GET'])
-# expects a user firebase ID token
-def get_project():
-    print("get_project")
-    if request.method == 'GET':
-        print(request.args.get('id'))
-        db.session.begin()
-        projects = db.session.query(Project).filter_by(**request.args).all()
-        return create_json_response(query_result_to_json(projects))
-
 
 @project_bp.route('/<int:project_id>', methods=['GET'])
 # expects a user firebase ID token
