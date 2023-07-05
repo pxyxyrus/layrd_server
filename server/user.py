@@ -45,11 +45,11 @@ def register_user():
 def update_user():
     print("update_user")
     if request.method == 'POST':
-        request_data = request.json
-        print(request_data['id_token'])
-        user_info = firebase_helper.authenticate_id_token(request_data['id_token'])
-        print(user_info)
         try:
+            request_data = request.json
+            print(request_data['id_token'])
+            user_info = firebase_helper.authenticate_id_token(request_data['id_token'])
+            print(user_info)
             db.session.begin()
             users = db.session.query(User).filter_by(uid=request_data['uid']).all()
             for user in users:
@@ -68,11 +68,11 @@ def update_user():
 def get_user_info():
     print("get_user_info")
     if request.method == 'POST':
-        request_data = request.json
-        print(request_data['id_token'])
-        user_info = firebase_helper.authenticate_id_token(request_data['id_token'])
-        print(user_info)
         try:
+            request_data = request.json
+            print(request_data['id_token'])
+            user_info = firebase_helper.authenticate_id_token(request_data['id_token'])
+            print(user_info)
             db.session.begin()
             users = db.session.query(User).filter_by(uid=request_data['uid']).all()
             print(users)

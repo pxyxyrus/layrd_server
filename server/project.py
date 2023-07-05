@@ -31,11 +31,11 @@ def change_project_status(request_data, status_to_change):
 def upload_project():
     print()
     if request.method == 'POST':
-        request_data = request.json
-        print(request_data)
-        proj = Project(**request_data)
-        print(proj)
         try:
+            request_data = request.json
+            print(request_data)
+            proj = Project(**request_data)
+            print(proj)
             db.session.begin()
             db.session.add(proj)
         except Exception as e:
@@ -53,7 +53,6 @@ def withdraw_project():
     if request.method == 'POST':
         request_data = request.json
         print(request_data)
-        print(ProjectStatus.withdrawn.value)
         try:
             change_project_status(request_data, ProjectStatus.withdrawn.value)
             return create_json_response('', status_code=201)

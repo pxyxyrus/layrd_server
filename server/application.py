@@ -20,9 +20,9 @@ def apply():
     print("apply")
     if request.method == 'POST':
         request_data = request.json
-        print(request_data['id_token'])
-        project_application = Application(**request_data['application_data'])
         try:
+            print(request_data['id_token'])
+            project_application = Application(**request_data['application_data'])
             db.session.begin()
             db.session.add(project_application)
         except Exception as e:
@@ -39,13 +39,19 @@ def apply():
 def get_applications():
     print("apply")
     if request.method == 'POST':
-        print(request.json)
-        request_data = request.json
-        applications = db.session.query(Application).filter_by(
-            # TODO : add constraints
-        ).all()
-        response_data = query_result_to_json_str(applications)
-        return create_json_response(response_data)
+        try:
+            print(request.json)
+            request_data = request.json
+            applications = db.session.query(Application).filter_by(
+                # TODO : add constraints
+            ).all()
+            response_data = query_result_to_json_str(applications)
+            return create_json_response(response_data)
+        except Exception as e:
+            db.session.rollback()
+            return create_json_error_response(e.args[0], status_code=400)
+
+
 
 
 
@@ -55,11 +61,10 @@ def get_applications():
 def select_application():
     print(select_application)
     if request.method == 'POST':
-        request_data = request.json
-        print(request_data['id_token'])
-
-        # application owner check logic
         try:
+            request_data = request.json
+            print(request_data['id_token'])
+            # application owner check logic
             db.session.begin()
             applications = db.session.query(Application).filter_by(
                 # TODO : add constraints
