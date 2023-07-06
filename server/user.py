@@ -16,11 +16,11 @@ def register_user():
     print(request.method)
     if request.method == 'POST':
         try:
-            request_data = request.json.data
-            request_auth_data = request.json.auth
+            request_data = request.json['data']
+            request_auth_data = request.json['auth']
             db.session.begin()
             user_info = firebase_helper.authenticate(request_auth_data)
-            users = db.session.query(User).filter_by(uid=request_data['uid']).all()
+            users = db.session.query(User).filter_by(uid=user_info['uid']).all()
             if len(users) == 0:
                 user = User(
                     uid=user_info['uid'],
@@ -46,8 +46,8 @@ def update_user():
     print("update_user")
     if request.method == 'POST':
         try:
-            request_data = request.json.data
-            request_auth_data = request.json.auth
+            request_data = request.json['data']
+            request_auth_data = request.json['auth']
             user_info = firebase_helper.authenticate(request_auth_data)
             db.session.begin()
             users = db.session.query(User).filter_by(uid=request_data['uid']).all()
@@ -68,8 +68,8 @@ def get_user_info():
     print("get_user_info")
     if request.method == 'POST':
         try:
-            request_data = request.json.data
-            request_auth_data = request.json.auth
+            request_data = request.json['data']
+            request_auth_data = request.json['auth']
             user_info = firebase_helper.authenticate(request_auth_data)
             db.session.begin()
             users = db.session.query(User).filter_by(uid=request_data['uid']).all()

@@ -21,8 +21,8 @@ def apply():
     print("apply")
     if request.method == 'POST':
         try:
-            request_data = request.json.data
-            request_auth_data = request.json.auth
+            request_data = request.json['data']
+            request_auth_data = request.json['auth']
             user_info = firebase_helper.authenticate(request_auth_data)
             project_application = Application(**request_data)
             db.session.begin()
@@ -43,8 +43,8 @@ def get_applications():
     if request.method == 'POST':
         try:
             print(request.json)
-            request_data = request.json.data
-            request_auth_data = request.json.auth
+            request_data = request.json['data']
+            request_auth_data = request.json['auth']
             applications = db.session.query(Application).filter_by(
                 # TODO : add constraints
             ).all()
@@ -65,8 +65,8 @@ def select_application():
     print(select_application)
     if request.method == 'POST':
         try:
-            request_data = request.json.data
-            request_auth_data = request.json.auth
+            request_data = request.json['data']
+            request_auth_data = request.json['auth']
             print(request_data['id_token'])
             # application owner check logic
             db.session.begin()
