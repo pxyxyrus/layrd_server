@@ -102,7 +102,7 @@ def get_project(project_id):
     if request.method == 'GET':
         try:
             db.session.begin()
-            projects = db.session.query(Project).filter_by(id=id).all()
+            projects = db.session.query(Project).filter_by(id=project_id).all()
             return create_json_response(query_result_to_json(projects))
         except Exception as e:
             return create_json_error_response(e.args[0])
