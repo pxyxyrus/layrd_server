@@ -6,6 +6,7 @@ import json
 from flask import (
     Blueprint, Response, make_response, flash, g, redirect, render_template, request, session, url_for
 )
+import server.firebase_helper as firebase_helper
 
 
 
@@ -32,7 +33,9 @@ def upload_project():
     print()
     if request.method == 'POST':
         try:
-            request_data = request.json
+            request_data = request.json.data
+            request_auth_data = request.json.auth
+            user_info = firebase_helper.authenticate(request_auth_data)
             print(request_data)
             proj = Project(**request_data)
             print(proj)
@@ -51,7 +54,7 @@ def upload_project():
 def withdraw_project():
     print("withdraw_project")
     if request.method == 'POST':
-        request_data = request.json
+        request_data = request.json.data
         print(request_data)
         try:
             change_project_status(request_data, ProjectStatus.withdrawn.value)
@@ -66,7 +69,7 @@ def withdraw_project():
 def complete_project():
     print("complete_project")
     if request.method == 'POST':
-        request_data = request.json
+        request_data = request.json.data
         print(request_data)
         try:
             change_project_status(request_data, ProjectStatus.successful.value)
@@ -80,7 +83,7 @@ def complete_project():
 def abort_project():
     print("abort_project")
     if request.method == 'POST':
-        request_data = request.json
+        request_data = request.json.data
         print(request_data)
         try:
             change_project_status(request_data, ProjectStatus.unsuccessful.value)
@@ -99,7 +102,7 @@ def get_project(project_id):
         try:
             db.session.begin()
             projects = db.session.query(Project).filter_by(id=id).all()
-            return create_json_response(query_result_to_json_str(projects))
+            return create_json_response(query_result_to_json(projects))
         except Exception as e:
             return create_json_error_response(e.args[0])
 
