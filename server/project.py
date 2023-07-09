@@ -18,13 +18,12 @@ project_bp = Blueprint('project', __name__)
 
 
 def change_project_status(request_data, status_to_change):
-    db.session.begin()
-    projects = db.session.query(Project).filter_by(id=request_data['id']).all()
-    print(status_to_change)
-    print(projects)
-    for proj in projects:
-        setattr(proj, "status", status_to_change)
-    db.session.commit()
+    with db.session.begin() as s:
+        projects = s.query(Project).filter_by(id=request_data['id']).all()
+        print(status_to_change)
+        print(projects)
+        for proj in projects:
+            setattr(proj, "status", status_to_change)
 
 
 
@@ -103,9 +102,13 @@ def get_project(project_id):
         try:
             db.session.begin()
             projects = db.session.query(Project).filter_by(id=project_id).all()
-            return create_json_response(query_result_to_json(projects))
         except Exception as e:
+            db.session.rollback()
             return create_json_error_response(e.args[0])
+        else:
+            response_data = query_result_to_json(projects)
+            db.session.commit()
+            return create_json_response(response_data)
 
 
 

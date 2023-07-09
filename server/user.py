@@ -78,5 +78,6 @@ def get_user_info():
             db.session.rollback()
             return create_json_error_response(e.args[0])
         else:
+            response_data = query_result_to_json(users)
             db.session.commit()
-            return create_json_response(query_result_to_json(users))
+            return create_json_response(response_data)
