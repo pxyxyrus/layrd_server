@@ -127,12 +127,13 @@ def get_projects():
                 projects = db.session.query(Project).filter(Project.id > cursor).filter_by(**request_data).limit(25).all()
             else:
                 projects = db.session.query(Project).filter_by(**request_data).limit(25).all()
-            response_data = query_result_to_json(projects)
-            print(response_data)
+
         except Exception as e:
             db.session.rollback()
             print(e)
             return create_json_error_response(e.args[0])
         else:
+            response_data = query_result_to_json(projects)
+            print(response_data)
             db.session.commit()
-            return create_json_response(query_result_to_json(projects))
+            return create_json_response(response_data)
