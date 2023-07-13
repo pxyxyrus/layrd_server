@@ -112,12 +112,27 @@ def get_project(project_id):
 
 
 
-# @project_bp.route('/get_projects', methods=['GET'])
-# # expects a user firebase ID token
-# def get_project(project_id):
-#     print("get_project")
-#     if request.method == 'GET':
-#         print(request.args.get('id'))
-#         db.session.begin()
-#         projects = db.session.query(Project).filter_by(id=id).all()
-#         return create_json_response(query_result_to_json_str(projects))
+@project_bp.route('/get_projects', methods=['POST'])
+# expects a user firebase ID token
+def get_projects():
+    print("get_projects")
+    if request.method == 'POST':
+        try:
+            request_data = request.json['data']
+            db.session.begin()
+            cursor = request_data.pop('cursor', None)
+            projects = None
+            print(cursor)
+            if cursor is not None:
+                projects = db.session.query(Project).filter(Project.id > cursor).filter_by(**request_data).limit(25).all()
+            else:
+                projects = db.session.query(Project).filter_by(**request_data).limit(25).all()
+            response_data = query_result_to_json(projects)
+            print(response_data)
+        except Exception as e:
+            db.session.rollback()
+            print(e)
+            return create_json_error_response(e.args[0])
+        else:
+            db.session.commit()
+            return create_json_response(query_result_to_json(projects))
