@@ -36,7 +36,29 @@ def apply():
 
 
 # debug functionality
-@app_bp.route('/get', methods=['POST'])
+@app_bp.route('/<int:application_id>', methods=['POST'])
+# expects a user firebase ID token
+def get_application(application_id):
+    print("apply")
+    if request.method == 'POST':
+        try:
+            print(request.json)
+            request_data = request.json['data']
+            request_auth_data = request.json['auth']
+            user_info = firebase_helper.authenticate(request_auth_data)
+            applications = db.session.query(Application).filter_by(
+                id=application_id, owner_uid=user_info['uid']
+            ).all()
+        except Exception as e:
+            db.session.rollback()
+            return create_json_error_response(e.args[0], status_code=400)
+        else:
+            response_data = query_result_to_json(applications)
+            db.session.commit()
+            return create_json_response(response_data)
+        
+
+@app_bp.route('/get_applications', methods=['POST'])
 # expects a user firebase ID token
 def get_applications():
     print("apply")
@@ -45,9 +67,17 @@ def get_applications():
             print(request.json)
             request_data = request.json['data']
             request_auth_data = request.json['auth']
-            applications = db.session.query(Application).filter_by(
-                # TODO : add constraints
-            ).all()
+            user_info = firebase_helper.authenticate(request_auth_data)
+            cursor = request_data.pop('cursor', None)
+            if cursor is not None:
+                applications = db.session.query(Application).filter(Application.id > cursor).filter_by(
+                    owner_uid=user_info['uid'],
+                    **request_data
+                ).limit(25).all()
+            else:
+                applications = db.session.query(Application).filter_by(
+                    **request_data
+                ).limit(25).all()
         except Exception as e:
             db.session.rollback()
             return create_json_error_response(e.args[0], status_code=400)
