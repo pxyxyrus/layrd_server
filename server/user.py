@@ -6,14 +6,14 @@ from flask import (
 from server import db
 from server.models import User
 from server.util import *
+from logger import logger
 
 user_bp = Blueprint('user', __name__)
 
 
 @user_bp.route('/register', methods=['POST'])
 def register_user():
-    print("register_user")
-    print(request.method)
+    logger.info("user/register")
     if request.method == 'POST':
         try:
             request_data = request.json['data']
@@ -27,8 +27,11 @@ def register_user():
                     email=user_info['email'],
                 )
                 print(user)
+                logger.info(f"User added \t\t email: {user_info['email']}, uid: {user_info['uid']}")
                 db.session.add(user)
         except Exception as e:
+            logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
+            logger.exception(e)
             db.session.rollback()
             return create_json_error_response(e.args[0])
         else:
@@ -43,7 +46,7 @@ def register_user():
 @user_bp.route('/update', methods=['POST'])
 # expects a user firebase ID token
 def update_user():
-    print("update_user")
+    logger.info("/user/update")
     if request.method == 'POST':
         try:
             request_data = request.json['data']
@@ -55,6 +58,8 @@ def update_user():
                 for key, value in request_data.items():
                     setattr(user, key, value)
         except Exception as e:
+            logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
+            logger.exception(e)
             db.session.rollback()
             return create_json_error_response(e.args[0])
         else:
@@ -65,7 +70,7 @@ def update_user():
 
 @user_bp.route('/get_info', methods=['POST'])
 def get_user_info():
-    print("get_user_info")
+    logger.info("/user/get_info")
     if request.method == 'POST':
         try:
             request_data = request.json['data']
@@ -75,6 +80,8 @@ def get_user_info():
             users = db.session.query(User).filter_by(uid=request_data['uid']).all()
             print(users)
         except Exception as e:
+            logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
+            logger.exception(e)
             db.session.rollback()
             return create_json_error_response(e.args[0])
         else:

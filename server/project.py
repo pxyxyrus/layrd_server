@@ -7,6 +7,7 @@ from flask import (
     Blueprint, Response, make_response, flash, g, redirect, render_template, request, session, url_for
 )
 import server.firebase_helper as firebase_helper
+from logger import logger
 
 
 
@@ -29,7 +30,7 @@ def change_project_status(request_data, status_to_change):
 
 @project_bp.route('/upload', methods=['POST'])
 def upload_project():
-    print()
+    logger.info("/project/upload")
     if request.method == 'POST':
         try:
             print(request.json['data'])
@@ -42,6 +43,8 @@ def upload_project():
             db.session.begin()
             db.session.add(proj)
         except Exception as e:
+            logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
+            logger.exception(e)
             db.session.rollback()
             return create_json_error_response(e.args[0])
         else:
@@ -52,14 +55,15 @@ def upload_project():
 
 @project_bp.route('/withdraw', methods=['POST'])
 def withdraw_project():
-    print("withdraw_project")
+    logger.info("/project/withdraw")
     if request.method == 'POST':
         request_data = request.json['data']
-        print(request_data)
         try:
             change_project_status(request_data, ProjectStatus.withdrawn.value)
             return create_json_response('', status_code=201)
         except Exception as e:
+            logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
+            logger.exception(e)
             return create_json_error_response(e.args[0])
         
 
@@ -67,7 +71,7 @@ def withdraw_project():
 
 @project_bp.route('/complete', methods=['POST'])
 def complete_project():
-    print("complete_project")
+    logger.info("/project/complete")
     if request.method == 'POST':
         request_data = request.json['data']
         print(request_data)
@@ -75,13 +79,15 @@ def complete_project():
             change_project_status(request_data, ProjectStatus.successful.value)
             return create_json_response('', status_code=201)
         except Exception as e:
+            logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
+            logger.exception(e)
             return create_json_error_response(e.args[0])
 
     
 
 @project_bp.route('/abort', methods=['POST'])
 def abort_project():
-    print("abort_project")
+    logger.info("/project/abort")
     if request.method == 'POST':
         request_data = request.json['data']
         print(request_data)
@@ -89,6 +95,8 @@ def abort_project():
             change_project_status(request_data, ProjectStatus.unsuccessful.value)
             return create_json_response('', status_code=201)
         except Exception as e:
+            logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
+            logger.exception(e)
             return create_json_error_response(e.args[0])
 
 
@@ -97,12 +105,14 @@ def abort_project():
 @project_bp.route('/<int:project_id>', methods=['GET'])
 # expects a user firebase ID token
 def get_project(project_id):
-    print("get_project")
+    logger.info(f"project/{project_id}")
     if request.method == 'GET':
         try:
             db.session.begin()
             projects = db.session.query(Project).filter_by(id=project_id).all()
         except Exception as e:
+            logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
+            logger.exception(e)
             db.session.rollback()
             return create_json_error_response(e.args[0])
         else:
@@ -115,7 +125,7 @@ def get_project(project_id):
 @project_bp.route('/get_projects', methods=['POST'])
 # expects a user firebase ID token
 def get_projects():
-    print("get_projects")
+    logger.info("/project/get_projects")
     if request.method == 'POST':
         try:
             request_data = request.json['data']
@@ -129,8 +139,9 @@ def get_projects():
                 projects = db.session.query(Project).filter_by(**request_data).limit(25).all()
 
         except Exception as e:
+            logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
+            logger.exception(e)
             db.session.rollback()
-            print(e)
             return create_json_error_response(e.args[0])
         else:
             response_data = query_result_to_json(projects)

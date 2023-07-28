@@ -7,6 +7,7 @@ from flask import (
 import json
 from server.util import *
 import server.firebase_helper as firebase_helper
+from logger import logger
 
 app_bp = Blueprint('application', __name__)
 
@@ -18,7 +19,7 @@ app_bp = Blueprint('application', __name__)
 @app_bp.route('/submit', methods=['POST'])
 # expects a user firebase ID token
 def apply():
-    print("apply")
+    logger.info("/application/submit")
     if request.method == 'POST':
         try:
             request_data = request.json['data']
@@ -28,6 +29,8 @@ def apply():
             db.session.begin()
             db.session.add(project_application)
         except Exception as e:
+            logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
+            logger.exception(e)
             db.session.rollback()
             return create_json_error_response(e.args[0], status_code=400)
         else:
@@ -39,7 +42,7 @@ def apply():
 @app_bp.route('/<int:application_id>', methods=['POST'])
 # expects a user firebase ID token
 def get_application(application_id):
-    print("apply")
+    logger.info(f"/application/{application_id}")
     if request.method == 'POST':
         try:
             print(request.json)
@@ -50,6 +53,8 @@ def get_application(application_id):
                 id=application_id, owner_uid=user_info['uid']
             ).all()
         except Exception as e:
+            logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
+            logger.exception(e)
             db.session.rollback()
             return create_json_error_response(e.args[0], status_code=400)
         else:
@@ -61,7 +66,7 @@ def get_application(application_id):
 @app_bp.route('/get_applications', methods=['POST'])
 # expects a user firebase ID token
 def get_applications():
-    print("apply")
+    logger.info("/application/get_applications")
     if request.method == 'POST':
         try:
             print(request.json)
@@ -79,6 +84,8 @@ def get_applications():
                     **request_data
                 ).limit(25).all()
         except Exception as e:
+            logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
+            logger.exception(e)
             db.session.rollback()
             return create_json_error_response(e.args[0], status_code=400)
         else:
@@ -95,7 +102,7 @@ def get_applications():
 
 @app_bp.route('/select', methods=['POST'])
 def select_application():
-    print(select_application)
+    logger.info("/application/select")
     if request.method == 'POST':
         try:
             request_data = request.json['data']
@@ -109,6 +116,8 @@ def select_application():
             application = applications[0]
             # TODO : change application to selected state
         except Exception as e:
+            logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
+            logger.exception(e)
             db.session.rollback()
             return create_json_error_response(e.args[0], status_code=400)
         else:
