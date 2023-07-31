@@ -3,4 +3,6 @@
 "database"="block_research"
 "username"="root"
 "password"=""
+
+[logger]
 "log_dir"="./logger/logs"

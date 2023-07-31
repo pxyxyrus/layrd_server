@@ -6,7 +6,7 @@ import datetime
 
 
 # Define the log file directory
-log_dir = config['database']['log_dir']
+log_dir = config['logger']['log_dir']
 
 # Ensure the log directory exists
 os.makedirs(log_dir, exist_ok=True)

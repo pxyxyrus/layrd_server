@@ -5,6 +5,8 @@ config/dev
 
 **test**
 
+logger/logs/**
+
 
 .venv
 .zshrc
