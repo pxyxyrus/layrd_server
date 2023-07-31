@@ -23,7 +23,7 @@ log_format = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 log_filename = os.path.join(log_dir, f"server_log")
 
 # Create a TimedRotatingFileHandler with a daily interval
-file_handler = TimedRotatingFileHandler(log_filename, when="midnight", interval=1, backupCount=0)
+file_handler = TimedRotatingFileHandler(log_filename, when="midnight", interval=1)
 file_handler.suffix = "_%Y-%m-%d.log"
 
 # Set the log format for the file handler
