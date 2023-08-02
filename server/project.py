@@ -1,7 +1,8 @@
 from server import db
-from server.models import Project
+from server.models import Project, Application
 from server.types import ProjectStatus
 from server.util import *
+from sqlalchemy import func
 import json
 from flask import (
     Blueprint, Response, make_response, flash, g, redirect, render_template, request, session, url_for
@@ -109,21 +110,32 @@ def get_project(project_id):
     if request.method == 'GET':
         try:
             db.session.begin()
-            projects = db.session.query(Project).filter_by(id=project_id).all()
+            projects = db.session.query(Project, func.count(Application.id).label('application_count'))\
+                .outerjoin(Application, Project.id == Application.project_id)\
+                .filter_by(id=project_id)\
+                .group_by(Project.id)\
+                .limit(25)\
+                .all()
         except Exception as e:
-            logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
+            print(e)
+            request_data = {"id": project_id}
+            logger.error(f"request_data : {json.dumps({request_data}, indent=0)}")
             logger.exception(e)
             db.session.rollback()
             return create_json_error_response(e.args[0])
         else:
-            response_data = query_result_to_json(projects)
+            response_data = []
+            for p in projects:
+                p = p._asdict()
+                d = p["Project"].to_dict()
+                d["application_count"] = p["application_count"]
+                response_data.append(d)
             db.session.commit()
             return create_json_response(response_data)
 
 
 
 @project_bp.route('/get_projects', methods=['POST'])
-# expects a user firebase ID token
 def get_projects():
     logger.info("/project/get_projects")
     if request.method == 'POST':
@@ -134,9 +146,20 @@ def get_projects():
             projects = None
             print(cursor)
             if cursor is not None:
-                projects = db.session.query(Project).filter(Project.id > cursor).filter_by(**request_data).limit(25).all()
-            else:
-                projects = db.session.query(Project).filter_by(**request_data).limit(25).all()
+                projects = db.session.query(Project, func.count(Application.id).label('application_count'))\
+                    .outerjoin(Application, Project.id == Application.project_id)\
+                    .filter(Project.id > cursor)\
+                    .filter_by(**request_data)\
+                    .group_by(Project.id)\
+                    .limit(25)\
+                    .all()
+            else:                
+                projects = db.session.query(Project, func.count(Application.id).label('application_count'))\
+                    .outerjoin(Application, Project.id == Application.project_id)\
+                    .filter_by(**request_data)\
+                    .group_by(Project.id)\
+                    .limit(25)\
+                    .all()
 
         except Exception as e:
             logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
@@ -144,7 +167,11 @@ def get_projects():
             db.session.rollback()
             return create_json_error_response(e.args[0])
         else:
-            response_data = query_result_to_json(projects)
-            print(response_data)
+            response_data = []
+            for p in projects:
+                p = p._asdict()
+                d = p["Project"].to_dict()
+                d["application_count"] = p["application_count"]
+                response_data.append(d)
             db.session.commit()
             return create_json_response(response_data)
