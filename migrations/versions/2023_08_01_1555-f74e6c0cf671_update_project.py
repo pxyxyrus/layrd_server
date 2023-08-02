@@ -17,14 +17,15 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column('project', sa.Column("application_number", sa.Integer(), nullable=False))
-    op.add_column('project', sa.Column("final_delivery_types", sa.String(255), nullable=False))
-    op.add_column('project', sa.Column("final_delivery_description", sa.UnicodeText(), nullable=False))
-
+    op.add_column('project', sa.Column("final_delivery_types", sa.String(255), default="[\"other\", \"na\", \"na\"]", nullable=False))
+    default_val = "[\"other\", \"na\", \"na\"]"
+    op.execute(f"UPDATE project SET final_delivery_types='{default_val}'")
+    default_val=""
+    op.add_column('project', sa.Column("final_delivery_description", sa.UnicodeText(), default="", nullable=False))
+    op.execute(f"UPDATE project SET final_delivery_description='{default_val}'")
     
 
 
 def downgrade() -> None:
-    op.drop_column('project', "application_number")
     op.drop_column('project', "final_delivery_types")
-    op.drop_column('project', "final_delivery_description")
+    # op.drop_column('project', "final_delivery_description")
