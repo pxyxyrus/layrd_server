@@ -112,7 +112,7 @@ def get_project(project_id):
             db.session.begin()
             projects = db.session.query(Project, func.count(Application.id).label('application_count'))\
                 .outerjoin(Application, Project.id == Application.project_id)\
-                .filter_by(id=project_id)\
+                .filter(Project.id==project_id)\
                 .group_by(Project.id)\
                 .limit(25)\
                 .all()
