@@ -17,11 +17,11 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column('project', sa.Column("final_delivery_types", sa.String(255), default="[\"other\", \"na\", \"na\"]", nullable=False))
     default_val = "[\"other\", \"na\", \"na\"]"
+    op.add_column('project', sa.Column("final_delivery_types", sa.String(255), default=default_val, nullable=False))
     op.execute(f"UPDATE project SET final_delivery_types='{default_val}'")
     default_val=""
-    op.add_column('project', sa.Column("final_delivery_description", sa.UnicodeText(), default="", nullable=False))
+    op.add_column('project', sa.Column("final_delivery_description", sa.UnicodeText(), default=default_val, nullable=False))
     op.execute(f"UPDATE project SET final_delivery_description='{default_val}'")
     
 
