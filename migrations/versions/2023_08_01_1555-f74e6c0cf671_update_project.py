@@ -28,4 +28,4 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_column('project', "final_delivery_types")
-    # op.drop_column('project', "final_delivery_description")
+    op.drop_column('project', "final_delivery_description")
