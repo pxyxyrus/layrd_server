@@ -149,11 +149,15 @@ def get_projects():
             projects = db.session.query(Project, func.count(Application.id).label('application_count'))\
                 .outerjoin(Application, Project.id == Application.project_id)
 
+            # if cursor was passed, apply the cursor condition first
             if cursor is not None:
                 projects = projects.filter(Project.id > cursor)
+
+            # now add conditions given by api call
             for key, value in request_data.items():
                 projects = projects.filter(key == value)
 
+            # group by and limit
             projects = projects.group_by(Project.id)\
                 .limit(25)\
                 .all()
