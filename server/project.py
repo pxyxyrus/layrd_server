@@ -144,22 +144,21 @@ def get_projects():
             db.session.begin()
             cursor = request_data.pop('cursor', None)
             projects = None
-            print(cursor)
+            request_data = { getattr(Project, key):value for key, value in request_data.items()}
+
+            projects = db.session.query(Project, func.count(Application.id).label('application_count'))\
+                .outerjoin(Application, Project.id == Application.project_id)
+
             if cursor is not None:
-                projects = db.session.query(Project, func.count(Application.id).label('application_count'))\
-                    .outerjoin(Application, Project.id == Application.project_id)\
-                    .filter(Project.id > cursor)\
-                    .filter_by(**request_data)\
-                    .group_by(Project.id)\
-                    .limit(25)\
-                    .all()
-            else:                
-                projects = db.session.query(Project, func.count(Application.id).label('application_count'))\
-                    .outerjoin(Application, Project.id == Application.project_id)\
-                    .filter_by(**request_data)\
-                    .group_by(Project.id)\
-                    .limit(25)\
-                    .all()
+                projects = projects.filter(Project.id > cursor)
+            for key, value in request_data.items():
+                projects = projects.filter(key == value)
+
+            projects = projects.group_by(Project.id)\
+                .limit(25)\
+                .all()
+
+
 
         except Exception as e:
             logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
@@ -168,10 +167,11 @@ def get_projects():
             return create_json_error_response(e.args[0])
         else:
             response_data = []
-            for p in projects:
-                p = p._asdict()
-                d = p["Project"].to_dict()
-                d["application_count"] = p["application_count"]
-                response_data.append(d)
-            db.session.commit()
+            if projects is not None:
+                for p in projects:
+                    p = p._asdict()
+                    d = p["Project"].to_dict()
+                    d["application_count"] = p["application_count"]
+                    response_data.append(d)
+                db.session.commit()
             return create_json_response(response_data)
