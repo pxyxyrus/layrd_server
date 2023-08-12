@@ -13,7 +13,8 @@ storage_bp = Blueprint('storage', __name__)
 
 @storage_bp.route('/get_token', methods=['POST'])
 # expects a user firebase ID token
-def apply():
+def get_token():
+    logger.info("/storage/get_token")
     if request.method == 'POST':
         try:
             request_auth_data = request.json['auth']
