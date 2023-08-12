@@ -6,3 +6,6 @@
 
 [logger]
 "log_dir"="./logger/logs"
+
+[azure]
+"account_name"=""
