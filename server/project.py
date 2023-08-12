@@ -174,5 +174,5 @@ def get_projects():
                     d = p["Project"].to_dict()
                     d["application_count"] = p["application_count"]
                     response_data.append(d)
-                db.session.commit()
+            db.session.commit()
             return create_json_response(response_data)
