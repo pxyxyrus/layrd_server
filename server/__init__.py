@@ -36,5 +36,9 @@ def create_app():
     app.register_blueprint(application.app_bp, url_prefix='/application')
     logger.info("application api added")
 
+    from . import storage
+    app.register_blueprint(storage.storage_bp, url_prefix='/storage')
+    logger.info("storage api added")
+
     
     return app

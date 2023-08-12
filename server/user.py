@@ -40,9 +40,6 @@ def register_user():
 
 
 
-
-
-
 @user_bp.route('/update', methods=['POST'])
 # expects a user firebase ID token
 def update_user():

@@ -11,8 +11,6 @@ from logger import logger
 
 app_bp = Blueprint('application', __name__)
 
-# cred = credentials.Certificate('./keys/block_research_key.json')
-# firebase_app = firebase_admin.initialize_app(cred)
 
 
 
