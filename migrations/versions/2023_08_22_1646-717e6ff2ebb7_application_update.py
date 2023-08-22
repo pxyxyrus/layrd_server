@@ -17,7 +17,7 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column('application', sa.Column('reference_link', sa.UnicodeTdeext(), nullable=False, server_default=sa.text("('layrd.xyz')")))
+    op.add_column('application', sa.Column('reference_link', sa.UnicodeText(), nullable=False, server_default=sa.text("('layrd.xyz')")))
     op.alter_column('application', 'reference_link', nullable=False, server_default=None, existing_server_default=sa.text("('layrd.xyz')"), existing_type=sa.UnicodeText())
     
 
