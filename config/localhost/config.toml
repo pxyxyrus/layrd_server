@@ -8,4 +8,7 @@
 "log_dir"="./logger/logs"
 
 [azure]
-"account_name"=""
+"storage_account_name"=""
+
+"communication_services_endpoint"=""
+"sender_email_address"=""
