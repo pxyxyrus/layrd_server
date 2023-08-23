@@ -4,7 +4,7 @@ import json
 from logger import logger
 
 
-cred = credentials.Certificate('./keys/block_research_key.json')
+cred = credentials.Certificate('./keys/firebase_block_research_key.json')
 firebase_app = firebase_admin.initialize_app(cred)
 logger.info("firebase app initialized")
 
