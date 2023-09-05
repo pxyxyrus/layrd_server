@@ -1,8 +1,9 @@
 from server import db
 from server.models import Project, Application
-from server.types import ProjectStatus
+from server.types import ProjectStatus, ApplicationStatus
 from server.util import *
-from sqlalchemy import func
+import server.azure_helper as azure_helper
+from sqlalchemy import func, or_
 import json
 from flask import (
     Blueprint, Response, make_response, flash, g, redirect, render_template, request, session, url_for
@@ -23,6 +24,7 @@ def change_project_status(request_data, status_to_change):
         print(projects)
         for proj in projects:
             setattr(proj, "status", status_to_change)
+    db.session.commit()
 
 
 
@@ -47,6 +49,21 @@ def upload_project():
             return create_json_error_response(e.args[0])
         else:
             db.session.commit()
+            proj_id = proj.id
+            recipients = [
+                {
+                    "address": user_info["email"],
+                    "displayName": user_info["email"]
+                }
+            ]
+            title = "Congratuation on your proposal!"
+            body = render_template("email/project_submit.html", proposal_link=f"layrd.xyz/{proj_id}")
+            azure_helper.send_email(title, recipients, body, body)
+
+            # need to explicitly call session.close
+            # because proj was accessed again for proj_id
+            db.session.close() 
+
             return create_json_response('', status_code=201)
 
 
@@ -176,3 +193,49 @@ def get_projects():
                     response_data.append(d)
             db.session.commit()
             return create_json_response(response_data)
+        
+
+
+@project_bp.route('/select_application', methods=['POST'])
+def select_application():
+    logger.info("/project/select_application")
+    if request.method == 'POST':
+        try:
+            request_data = request.json['data']
+            request_auth_data = request.json['auth']
+            user_info = firebase_helper.authenticate(request_auth_data)
+
+            project_id = request_data['project_id']
+            app_ids = request_data['ids']
+            # application owner check logic
+            db.session.begin()
+            projects = db.session.query(Project)\
+                .filter(Project.id==project_id)\
+                .limit(25)\
+                .all()
+            
+            if user_info['uid'] != projects[0].owner_uid:
+                return create_json_error_response({
+                        'error_code': 'invalid_action_error',
+                        'error_message': "not the owner of the project"
+                    }, status_code=400)
+
+            print(str(db.session.query(Application)\
+                .filter(or_(Application.id == id for id in app_ids))\
+                .limit(25)\
+                .statement))
+            applications = db.session.query(Application)\
+                .filter(or_(Application.id == id for id in app_ids))\
+                .limit(25)\
+                .all()
+            print(applications)
+            for app in applications:
+                app.status = ApplicationStatus.accepted.value
+        except Exception as e:
+            logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
+            logger.exception(e)
+            db.session.rollback()
+            return create_json_error_response(e.args[0], status_code=400)
+        else:
+            db.session.commit()
+            return create_json_response('', 201)

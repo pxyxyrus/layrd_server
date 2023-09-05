@@ -2,12 +2,13 @@ from server import db
 from server.models import Project, Application
 from server.types import ProjectStatus, ApplicationStatus
 from flask import (
-    Blueprint, Response, make_response, flash, g, redirect, render_template, request, session, url_for
+    Blueprint, render_template, request,
 )
 import json
 from server.util import *
 import server.firebase_helper as firebase_helper
 from logger import logger
+import server.azure_helper as azure_helper
 
 app_bp = Blueprint('application', __name__)
 
@@ -33,6 +34,16 @@ def apply():
             return create_json_error_response(e.args[0], status_code=400)
         else:
             db.session.commit()
+            recipients = [
+                {
+                    "address": user_info["email"],
+                    "displayName": user_info["email"]
+                }
+            ]
+            title = "Congratuation on your application!"
+            body = render_template("email/application_submit.html", application_link=request_data['resume_link'])
+            azure_helper.send_email(title, recipients, body, body)
+
             return create_json_response('', 201)
 
 
@@ -92,34 +103,3 @@ def get_applications():
             return create_json_response(response_data)
 
 
-
-
-
-
-
-
-@app_bp.route('/select', methods=['POST'])
-def select_application():
-    logger.info("/application/select")
-    if request.method == 'POST':
-        try:
-            request_data = request.json['data']
-            request_auth_data = request.json['auth']
-            print(request_data['id_token'])
-            # application owner check logic
-            db.session.begin()
-            applications = db.session.query(Application).filter_by(
-                # TODO : add constraints
-            ).all()
-            application = applications[0]
-            # TODO : change application to selected state
-        except Exception as e:
-            logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
-            logger.exception(e)
-            db.session.rollback()
-            return create_json_error_response(e.args[0], status_code=400)
-        else:
-            db.session.commit()
-            return create_json_response('', 201)
-
-    
