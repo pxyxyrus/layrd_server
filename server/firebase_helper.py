@@ -49,6 +49,9 @@ def authenticate(auth_data):
 
         
 
+def get_user_email_from_uid(uid):
+    user = auth.get_user(uid)
+    return user.email
 
 
 
