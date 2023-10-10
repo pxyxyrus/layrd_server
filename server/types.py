@@ -22,14 +22,10 @@ class ProjectStatus(enum.Enum):
     successful = 'successful' # project successfully finished
     unsuccessful = 'unsuccessful' # project aborted by someone
 
-
-
-
 class ApplicationStatus(enum.Enum):
-    applied = 'applied'
-    accepted = 'accepted'
-    rejected = 'rejected'
-    closed = 'closed'
-
-    
+    applied = 'applied' # application is pending
+    accepted = 'accepted' # application accepted by the project
+    rejected = 'rejected' # applicant rejected the project offer
+    confirmed = 'confirmed' # applicant confirmed joining the project
+    withdrawn = 'withdrawn' # applicant withdrew from the project
 

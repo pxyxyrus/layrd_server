@@ -177,7 +177,6 @@ def get_projects():
                 .all()
 
 
-
         except Exception as e:
             logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
             logger.exception(e)
@@ -207,30 +206,31 @@ def select_application():
 
             project_id = request_data['project_id']
             app_ids = request_data['ids']
-            # application owner check logic
+
             db.session.begin()
-            projects = db.session.query(Project)\
+            project = db.session.query(Project)\
                 .filter(Project.id==project_id)\
                 .limit(25)\
-                .all()
+                .first()
             
-            if user_info['uid'] != projects[0].owner_uid:
+            if user_info['uid'] != project.owner_uid:
+                # TODO need to define better errors
                 return create_json_error_response({
                         'error_code': 'invalid_action_error',
                         'error_message': "not the owner of the project"
                     }, status_code=400)
 
-            print(str(db.session.query(Application)\
-                .filter(or_(Application.id == id for id in app_ids))\
-                .limit(25)\
-                .statement))
             applications = db.session.query(Application)\
+                .filter(Application.status == ApplicationStatus.applied.value)\
                 .filter(or_(Application.id == id for id in app_ids))\
-                .limit(25)\
+                .filter(Application.project_id == project.id)\
                 .all()
             print(applications)
+
+
             for app in applications:
                 app.status = ApplicationStatus.accepted.value
+
         except Exception as e:
             logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
             logger.exception(e)
@@ -238,4 +238,100 @@ def select_application():
             return create_json_error_response(e.args[0], status_code=400)
         else:
             db.session.commit()
+            
+            recipients = []
+
+            for app in applications:
+                accepted_user_email = firebase_helper.get_user_email_from_uid(app.owner_uid)
+                recipients.append(
+                    {
+                        "address": accepted_user_email,
+                        "displayName": accepted_user_email
+                    }
+                )
+
+            title = "Congratuation! your application is accepted."
+            body = render_template("email/project_accept_application.html", project_name=project.title, accept_link="")
+            azure_helper.send_email(title, recipients, body, body)
+
+            # need to explicitly call session.close
+            # because proj was accessed again for proj_id
+            db.session.close()
+
+            return create_json_response('', 201)
+
+
+
+@project_bp.route('/start_project', methods=['POST'])
+def start_project():
+    logger.info("/project/start_project")
+    if request.method == 'POST':
+        try:
+            request_data = request.json['data']
+            request_auth_data = request.json['auth']
+            user_info = firebase_helper.authenticate(request_auth_data)
+
+            project_id = request_data['project_id']
+
+            db.session.begin()
+            project = db.session.query(Project)\
+                .filter(Project.id==project_id)\
+                .limit(25)\
+                .first()
+            
+            if user_info['uid'] != project.owner_uid:
+                # TODO need to define better errors
+                return create_json_error_response({
+                        'error_code': 'invalid_action_error',
+                        'error_message': "not the owner of the project"
+                    }, status_code=400)
+            
+            project.status = ProjectStatus.ongoing.value
+
+            project_participants = db.session.query(Application.owner_uid)\
+                .filter(Application.status == ApplicationStatus.confirmed.value)\
+                .filter(Application.project_id == project_id)\
+                .with_for_update()\
+                .all()
+
+            db.session.commit()
+        except Exception as e:
+            logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
+            logger.exception(e)
+            db.session.rollback()
+            return create_json_error_response(e.args[0], status_code=400)
+        else:
+            recipients = []
+
+            # add the project owner to the emailing list
+            owner_user_email = firebase_helper.get_user_email_from_uid(project.owner_uid)
+            recipients.append(                                {
+                "address": owner_user_email,
+                "displayName": owner_user_email
+            })
+            
+
+            # add all other users that are in the project
+            for p_uid in project_participants:
+                accepted_user_email = firebase_helper.get_user_email_from_uid(p_uid)
+                recipients.append(
+                    {
+                        "address": accepted_user_email,
+                        "displayName": accepted_user_email
+                    }
+                )
+
+
+            title = "Team formation complete"
+            body = render_template(
+                "email/project_team_formation_complete.html",
+                project_start_date=project.start_date,
+                project_end_date=project.end_date
+            )
+            azure_helper.send_email(title, recipients, body, body)
+
+            # need to explicitly call session.close
+            # because ORM objects are accessed again
+            db.session.close()
+
             return create_json_response('', 201)

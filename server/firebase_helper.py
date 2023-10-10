@@ -40,7 +40,6 @@ def authenticate(auth_data):
         logger.exception(e)
         raise Exception({'error_code': 'user_disabled', 'error_message': e.default_message}) from None
     except Exception as e:
-        # TODO logging needed, including stacktrace
         logger.exception(e)
         raise Exception({
                 'error_code': 'auth_error',
