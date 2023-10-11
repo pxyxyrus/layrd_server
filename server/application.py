@@ -112,7 +112,7 @@ def confirm_project():
             request_data = request.json['data']
             request_auth_data = request.json['auth']
             user_info = firebase_helper.authenticate(request_auth_data)
-            id = request_data.pop(id)
+            id = request_data.pop('id')
 
             db.session.begin_nested()
 
@@ -186,7 +186,7 @@ def confirm_project():
             })
 
             # add all other users that are in the project
-            for p_uid in project_participants:
+            for (p_uid,) in project_participants:
                 accepted_user_email = firebase_helper.get_user_email_from_uid(p_uid)
                 recipients.append(
                     {
@@ -199,8 +199,8 @@ def confirm_project():
             title = "Team formation complete"
             body = render_template(
                 "email/project_team_formation_complete.html",
-                project_start_date=project.start_date,
-                project_end_date=project.end_date
+                project_start_date=timestamp_to_year_month_date(project.start_date),
+                project_end_date=timestamp_to_year_month_date(project.end_date)
             )
             azure_helper.send_email(title, recipients, body, body)
 
@@ -221,7 +221,7 @@ def withdraw_project():
             request_data = request.json['data']
             request_auth_data = request.json['auth']
             user_info = firebase_helper.authenticate(request_auth_data)
-            id = request_data.pop(id)
+            id = request_data.pop('id')
 
             application = db.session.query(Application).filter_by(
                     id=id,

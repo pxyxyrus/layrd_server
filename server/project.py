@@ -262,16 +262,16 @@ def select_application():
 
 
 
-@project_bp.route('/start_project', methods=['POST'])
+@project_bp.route('/start', methods=['POST'])
 def start_project():
-    logger.info("/project/start_project")
+    logger.info("/project/start")
     if request.method == 'POST':
         try:
             request_data = request.json['data']
             request_auth_data = request.json['auth']
             user_info = firebase_helper.authenticate(request_auth_data)
 
-            project_id = request_data['project_id']
+            project_id = request_data['id']
 
             db.session.begin()
             project = db.session.query(Project)\
@@ -291,7 +291,6 @@ def start_project():
             project_participants = db.session.query(Application.owner_uid)\
                 .filter(Application.status == ApplicationStatus.confirmed.value)\
                 .filter(Application.project_id == project_id)\
-                .with_for_update()\
                 .all()
 
             db.session.commit()
@@ -310,9 +309,8 @@ def start_project():
                 "displayName": owner_user_email
             })
             
-
             # add all other users that are in the project
-            for p_uid in project_participants:
+            for (p_uid,) in project_participants:
                 accepted_user_email = firebase_helper.get_user_email_from_uid(p_uid)
                 recipients.append(
                     {
@@ -321,12 +319,11 @@ def start_project():
                     }
                 )
 
-
             title = "Team formation complete"
             body = render_template(
                 "email/project_team_formation_complete.html",
-                project_start_date=project.start_date,
-                project_end_date=project.end_date
+                project_start_date=timestamp_to_year_month_date(project.start_date),
+                project_end_date=timestamp_to_year_month_date(project.end_date)
             )
             azure_helper.send_email(title, recipients, body, body)
 

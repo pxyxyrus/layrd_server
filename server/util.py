@@ -1,6 +1,7 @@
 import json
 from flask import Response
 from server.models import RootModel
+import datetime
 
 
 
@@ -23,3 +24,9 @@ def create_json_response(data, success: bool=True, status_code: int = 200):
 # expects data to be a json object
 def create_json_error_response(data, status_code: int = 400):
     return create_json_response(data, success=False, status_code=status_code)
+
+
+# this function assumes timestamp is in seconds
+# returns year-month-date in UTC
+def timestamp_to_year_month_date(timestamp):
+    return datetime.datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d')
