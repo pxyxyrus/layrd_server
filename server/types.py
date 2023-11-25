@@ -21,6 +21,7 @@ class ProjectStatus(enum.Enum):
     ongoing = 'ongoing' # staking happened
     successful = 'successful' # project successfully finished
     unsuccessful = 'unsuccessful' # project aborted by someone
+    saved = 'saved' # project is saved but not complete
 
 class ApplicationStatus(enum.Enum):
     applied = 'applied' # application is pending
@@ -28,4 +29,5 @@ class ApplicationStatus(enum.Enum):
     rejected = 'rejected' # applicant rejected the project offer
     confirmed = 'confirmed' # applicant confirmed joining the project
     withdrawn = 'withdrawn' # applicant withdrew from the project
+    saved = 'saved' # application is saved but not complete
 

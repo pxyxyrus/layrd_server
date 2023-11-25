@@ -44,3 +44,6 @@ start flask server
 ```
 python3 app.py
 ```
+
+
+The `.env` file must be present to run the server.
