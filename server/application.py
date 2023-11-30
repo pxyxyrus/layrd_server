@@ -241,3 +241,24 @@ def withdraw_project():
         else:
             db.session.commit()
             return  create_json_response('', status_code=201)
+
+
+
+@app_bp.route('/save', methods=['POST'])
+def save_project():
+    logger.info("/application/save")
+
+    ## paul's implementation
+
+
+    pass 
+
+
+
+@app_bp.route('/load', methods=['POST'])
+def load_project():
+    logger.info("/application/load")
+
+    ## paul's implementation
+
+    pass

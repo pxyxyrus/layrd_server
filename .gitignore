@@ -2,6 +2,7 @@
 keys
 
 config/dev
+config/localhost
 
 **test**
 
