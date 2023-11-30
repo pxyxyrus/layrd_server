@@ -41,6 +41,24 @@ def upload_project():
             proj = Project(**request_data)
             print(proj)
             db.session.begin()
+            if 'id' in request_data:
+                # if there is an 'id' field passed we need to check if the status is saved or not
+                # and if the current sender is the owner
+                exist_proj = db.session.query(Project).filter(Project.id == request_data['id']).first()
+                if exist_proj is not None:
+                    if user_info['uid'] != exist_proj.owner_uid:
+                        # TODO need to define better errors
+                        return create_json_error_response({
+                                'error_code': 'invalid_action_error',
+                                'error_message': "not the owner of the project"
+                            }, status_code=400)
+                    elif exist_proj.status != ProjectStatus.saved.value:
+                        # TODO need to define better errors
+                        return create_json_error_response({
+                            'error_code': 'invalid_project_status_error',
+                            'error_message': "project status is not saved"
+                        })
+                    
             db.session.add(proj)
         except Exception as e:
             logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
@@ -68,51 +86,51 @@ def upload_project():
 
 
 
-@project_bp.route('/withdraw', methods=['POST'])
-def withdraw_project():
-    logger.info("/project/withdraw")
-    if request.method == 'POST':
-        request_data = request.json['data']
-        try:
-            change_project_status(request_data, ProjectStatus.withdrawn.value)
-            return create_json_response('', status_code=201)
-        except Exception as e:
-            logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
-            logger.exception(e)
-            return create_json_error_response(e.args[0])
+# @project_bp.route('/withdraw', methods=['POST'])
+# def withdraw_project():
+#     logger.info("/project/withdraw")
+#     if request.method == 'POST':
+#         request_data = request.json['data']
+#         try:
+#             change_project_status(request_data, ProjectStatus.withdrawn.value)
+#             return create_json_response('', status_code=201)
+#         except Exception as e:
+#             logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
+#             logger.exception(e)
+#             return create_json_error_response(e.args[0])
         
 
 
 
-@project_bp.route('/complete', methods=['POST'])
-def complete_project():
-    logger.info("/project/complete")
-    if request.method == 'POST':
-        request_data = request.json['data']
-        print(request_data)
-        try:
-            change_project_status(request_data, ProjectStatus.successful.value)
-            return create_json_response('', status_code=201)
-        except Exception as e:
-            logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
-            logger.exception(e)
-            return create_json_error_response(e.args[0])
+# @project_bp.route('/complete', methods=['POST'])
+# def complete_project():
+#     logger.info("/project/complete")
+#     if request.method == 'POST':
+#         request_data = request.json['data']
+#         print(request_data)
+#         try:
+#             change_project_status(request_data, ProjectStatus.successful.value)
+#             return create_json_response('', status_code=201)
+#         except Exception as e:
+#             logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
+#             logger.exception(e)
+#             return create_json_error_response(e.args[0])
 
     
 
-@project_bp.route('/abort', methods=['POST'])
-def abort_project():
-    logger.info("/project/abort")
-    if request.method == 'POST':
-        request_data = request.json['data']
-        print(request_data)
-        try:
-            change_project_status(request_data, ProjectStatus.unsuccessful.value)
-            return create_json_response('', status_code=201)
-        except Exception as e:
-            logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
-            logger.exception(e)
-            return create_json_error_response(e.args[0])
+# @project_bp.route('/abort', methods=['POST'])
+# def abort_project():
+#     logger.info("/project/abort")
+#     if request.method == 'POST':
+#         request_data = request.json['data']
+#         print(request_data)
+#         try:
+#             change_project_status(request_data, ProjectStatus.unsuccessful.value)
+#             return create_json_response('', status_code=201)
+#         except Exception as e:
+#             logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
+#             logger.exception(e)
+#             return create_json_error_response(e.args[0])
 
 
 
@@ -126,7 +144,8 @@ def get_project(project_id):
             db.session.begin()
             projects = db.session.query(Project, func.count(Application.id).label('application_count'))\
                 .outerjoin(Application, Project.id == Application.project_id)\
-                .filter(Project.id==project_id)\
+                .filter(Project.id == project_id)\
+                .filter(Project.status != ProjectStatus.saved.value)\
                 .group_by(Project.id)\
                 .limit(25)\
                 .all()
@@ -158,10 +177,11 @@ def get_projects():
             db.session.begin()
             cursor = request_data.pop('cursor', None)
             projects = None
-            request_data = { getattr(Project, key):value for key, value in request_data.items()}
+            request_data = { getattr(Project, key):value for key, value in request_data.items() }
 
             projects = db.session.query(Project, func.count(Application.id).label('application_count'))\
-                .outerjoin(Application, Project.id == Application.project_id)
+                .outerjoin(Application, Project.id == Application.project_id)\
+                .filter(Project.status != ProjectStatus.saved.value)
 
             # if cursor was passed, apply the cursor condition first
             if cursor is not None:
@@ -209,7 +229,7 @@ def select_application():
 
             db.session.begin()
             project = db.session.query(Project)\
-                .filter(Project.id==project_id)\
+                .filter(Project.id == project_id)\
                 .limit(25)\
                 .first()
             
@@ -219,6 +239,12 @@ def select_application():
                         'error_code': 'invalid_action_error',
                         'error_message': "not the owner of the project"
                     }, status_code=400)
+            elif project.status != ProjectStatus.open.value:
+                # TODO need to define better errors
+                return create_json_error_response({
+                    'error_code': 'invalid_project_status_error',
+                    'error_message': "project status is not opened"
+                })
 
             applications = db.session.query(Application)\
                 .filter(Application.status == ApplicationStatus.applied.value)\
@@ -285,6 +311,12 @@ def start_project():
                         'error_code': 'invalid_action_error',
                         'error_message': "not the owner of the project"
                     }, status_code=400)
+            elif project.status != ProjectStatus.open.value:
+                # TODO need to define better errors
+                return create_json_error_response({
+                    'error_code': 'invalid_project_status_error',
+                    'error_message': "project status is not opened"
+                })
             
             project.status = ProjectStatus.ongoing.value
 
@@ -332,3 +364,64 @@ def start_project():
             db.session.close()
 
             return create_json_response('', 201)
+
+
+
+
+@project_bp.route('/save', methods=['POST'])
+def save_project():
+    logger.info("/project/save")
+    if request.method == 'POST':
+        try:
+            print(request.json['data'])
+            request_data = request.json['data']
+            request_auth_data = request.json['auth']
+            user_info = firebase_helper.authenticate(request_auth_data)
+            print(request_data)
+            proj = Project(**request_data)
+            print(proj)
+            db.session.begin()
+            if 'id' in request_data:
+                # if there is an 'id' field passed we need to check if the status is saved or not
+                # and if the current sender is the owner
+                exist_proj = db.session.query(Project).filter(Project.id == request_data['id']).first()
+                if exist_proj is not None:
+                    if user_info['uid'] != exist_proj.owner_uid:
+                        # TODO need to define better errors
+                        return create_json_error_response({
+                                'error_code': 'invalid_action_error',
+                                'error_message': "not the owner of the project"
+                            }, status_code=400)
+                    elif exist_proj.status != ProjectStatus.saved.value:
+                        # TODO need to define better errors
+                        return create_json_error_response({
+                            'error_code': 'invalid_project_status_error',
+                            'error_message': "project status is not saved"
+                        })
+                    
+            db.session.add(proj)
+        except Exception as e:
+            logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
+            logger.exception(e)
+            db.session.rollback()
+            return create_json_error_response(e.args[0])
+        else:
+            db.session.commit()
+            proj_id = proj.id
+            # need to explicitly call session.close
+            # because proj was accessed again for proj_id
+            db.session.close() 
+
+            return create_json_response({'id': proj_id}, status_code=201) 
+
+
+
+@project_bp.route('/load', methods=['POST'])
+def load_project():
+    logger.info("/project/load")
+
+    ## paul's implementation
+
+
+
+    pass
