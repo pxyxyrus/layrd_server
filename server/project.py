@@ -450,6 +450,7 @@ def load_project():
                     'error_code': 'saved_project_status_not_saved',
                     'error_message': 'Project status not saved',
                 })
+            # status 403 is indicating that the request is acknowledged but refused to authorize
             elif user_info['uid'] != project.owner_uid:
                 return create_json_error_response({
                     'error_code': 'unauthorized_access',
