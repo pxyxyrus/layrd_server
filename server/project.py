@@ -432,7 +432,6 @@ def load_project():
                     'error_code': 'missing_project_id',
                     'error_message': 'Project ID is required',
                 }, status_code=400)
-            elif
 
             # query the database for retrieving the status == saved project. If no result found then return None.
             saved_project = db.sessions.query(Project)\
@@ -465,6 +464,8 @@ def load_project():
         else:
             # if no errors, then serialize the saved project data and return the response
             serialized_saved_project = saved_project.to_dict()
+
+            # create_json_response default to 200 code
             return create_json_response(serialized_project)
     ## paul's implementation
 
