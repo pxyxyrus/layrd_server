@@ -419,7 +419,53 @@ def save_project():
 @project_bp.route('/load', methods=['POST'])
 def load_project():
     logger.info("/project/load")
+    if request.method == 'POST':
+        try:
+            # getting infos from database, then authenticate using info from auth
+            request_data = request.json['data']
+            request_auth_data = request.json['auth']
+            user_info = firebase_helper.authenticate(request_auth_data)
 
+            # check if project id is provided
+            if 'id' not in request_data:
+                return create_json_error_response({
+                    'error_code': 'missing_project_id',
+                    'error_message': 'Project ID is required',
+                }, status_code=400)
+            elif
+
+            # query the database for retrieving the status == saved project. If no result found then return None.
+            saved_project = db.sessions.query(Project)\
+            .filter(Project.id == request_data['id'])\
+            .filter(Project.status == ProjectStatus.saved.value)\
+            .first()
+
+            # handle cases where the project does not exist or status is not saved or the user is not authorized
+            if save_project is None:
+                return create_json_error_response({
+                    'error_code': 'saved_project_not_found',
+                    'error_message': 'Project not found',
+                }, status_code=404)
+            elif save_project.status != ProjectStatus.saved.value:
+                return change_project_status({
+                    'error_code': 'saved_project_status_not_saved',
+                    'error_message': 'Project status not saved',
+                })
+            elif user_info['uid'] != project.owner_uid:
+                return create_json_error_response({
+                    'error_code': 'unauthorized_access',
+                    'error_message': "User is not authorized to access this project"
+                }, status_code=403)
+
+        except Exception as e:
+            logger.exception(e)
+            db.session.rollback()
+            return create_json_error_response(str(e), status_code=500)
+
+        else:
+            # if no errors, then serialize the saved project data and return the response
+            serialized_saved_project = saved_project.to_dict()
+            return create_json_response(serialized_project)
     ## paul's implementation
 
 
