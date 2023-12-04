@@ -222,7 +222,7 @@ def withdraw_project():
             request_auth_data = request.json['auth']
             user_info = firebase_helper.authenticate(request_auth_data)
             id = request_data.pop('id')
-
+            
             application = db.session.query(Application).filter_by(
                     id=id,
                     owner_uid=user_info['uid'],
@@ -247,6 +247,54 @@ def withdraw_project():
 @app_bp.route('/save', methods=['POST'])
 def save_project():
     logger.info("/application/save")
+    if request.method == 'POST':
+        try:
+            request_data = request.json['data']
+            request_auth_data = request.json['auth']
+            user_info = firebase_helper.authenticate(request_auth_data)
+            project_application = Application(**request_data)
+            db.session.begin()
+
+            # check if the project is open
+            project = db.session.query(Project)\
+                            .filter(Project.id == request_data['project_id'])\
+                            .first()
+            if project is None or project.status != ProjectStatus.open.value:
+                return create_json_error_response({
+                    'error_code': 'project_not_open',
+                    'error_message': 'Project is not open for applications'
+                }, status_code=400)
+
+            # if applied project is open status, check if application is valid
+            save_application = db.session.query(Application)\
+                            .filter(Application.project_id==request_data['project_id'].)\
+                            .filter(Application.onwer_uid==user_info[uid])\
+                            .first()
+        
+            # handle cases where the application does not exist or the user is not authorized. Don't we need to determine if the project status is open or not?
+            if save_application is None:
+                return create_json_error_response({
+                    'error_code': 'project_status_not_open',
+                    'error_message': 'Project is not opened for applicant'
+                }, status_code=400)
+            elif user_info['uid'] != save_application.onwner_uid:
+                return create_json_error_response({
+                    'error_code': 'unauthorized_access',
+                    'error_message': "User is not authorized to apply to this project"
+                }, status_code=403)
+            
+            db.session.add(project_application)
+        except Exception as e:
+            logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
+            logger.exception(e)
+            db.session.rollback()
+            return create_json_error_response(e.args[0])
+        else:
+            db.session.commit()
+            saved_app_id = project_application.id
+            db.session.close()
+
+            return create_json_response({'Saved Appplication ID': saved_app_id}, status_code=201) 
 
     ## paul's implementation
 
