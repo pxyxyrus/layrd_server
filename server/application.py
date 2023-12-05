@@ -259,7 +259,12 @@ def save_project():
             project = db.session.query(Project)\
                             .filter(Project.id == request_data['project_id'])\
                             .first()
-            if project is None or project.status != ProjectStatus.open.value:
+            if project is None:
+                return create_json_error_response({
+                    'error_code': 'Project_not_found',
+                    'error_message': 'Project is not found'
+                }, status_code=400)
+            elif project.status != ProjectStatus.open.value:
                 return create_json_error_response({
                     'error_code': 'project_not_open',
                     'error_message': 'Project is not open for applications'
@@ -267,15 +272,15 @@ def save_project():
 
             # if applied project is open status, check if application is valid
             save_application = db.session.query(Application)\
-                            .filter(Application.project_id==request_data['project_id'].)\
-                            .filter(Application.onwer_uid==user_info[uid])\
+                            .filter(Application.project_id==request_data['project_id'])\
                             .first()
-        
-            # handle cases where the application does not exist or the user is not authorized. Don't we need to determine if the project status is open or not?
+
+            # TODO figure out the way to save the application that already saved.
+            # handle cases where the application does not exist or the user is not authorized
             if save_application is None:
                 return create_json_error_response({
-                    'error_code': 'project_status_not_open',
-                    'error_message': 'Project is not opened for applicant'
+                    'error_code': 'application_not_found',
+                    'error_message': 'Application is not found'
                 }, status_code=400)
             elif user_info['uid'] != save_application.onwner_uid:
                 return create_json_error_response({
@@ -306,7 +311,50 @@ def save_project():
 @app_bp.route('/load', methods=['POST'])
 def load_project():
     logger.info("/application/load")
+    if request.method == 'POST':
+        try:
+            request_data = request.json['data']
+            request_auth_data = request.json['auth']
+            user_info = firebase_helper.authenticate(request_auth_data)
 
+            # check if application id is provided
+            if 'id' not in request_data:
+                return create_json_error_response({
+                    'error_code': 'missing_application_id',
+                    'error_message': 'Application ID is required',
+                }, status_code=400)
+
+            # query the database
+            saved_application = db.session.query(Application)\
+                                .filter(Application.id == request_data['id'])\
+                                .first()
+
+            if saved_application is None:
+                return create_json_error_response({
+                    'error_code': 'saved_application_not_found',
+                    'error_message': 'Application not found',
+                })
+            if saved_application.status != ApplicationStatus.saved.value:
+                return create_json_error_response({
+                    'error_code': 'application_not_in_saved_status',
+                    'error_message': 'Application is not in saved status',
+                })
+            elif saved_application.onwner_uid != user_info['uid']:
+                return create_json_error_response({
+                    'error_code': 'unauthorized_access',
+                    'error_message': "User is not authorized to this application"
+                }, status_code=403)
+
+        except Exception as e:
+            logger.exception(e)
+            db.session.rollback()
+            return create_json_error_response(str(e), status_code=500)         
+        else:
+            # if no errors, then serialize the saved project data and return the response
+            serialized_saved_application = saved_application.to_dict()
+
+            # create_json_response default to 200 code
+            return create_json_response(serialized_saved_application)
     ## paul's implementation
 
     pass

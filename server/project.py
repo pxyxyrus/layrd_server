@@ -446,12 +446,12 @@ def load_project():
                     'error_message': 'Project not found',
                 }, status_code=404)
             # status 403 is indicating that the request is acknowledged but refused to authorize
-            elif user_info['uid'] != project.owner_uid:
+            elif user_info['uid'] != saved_project.owner_uid:
                 return create_json_error_response({
                     'error_code': 'unauthorized_access',
                     'error_message': "User is not authorized to access this project"
                 }, status_code=403)
-            elif save_project.status != ProjectStatus.saved.value:
+            elif ProjectStatus.saved.value != saved_project.status:
                 return change_project_status({
                     'error_code': 'saved_project_status_not_saved',
                     'error_message': 'Project status not saved',
@@ -467,7 +467,7 @@ def load_project():
             serialized_saved_project = saved_project.to_dict()
 
             # create_json_response default to 200 code
-            return create_json_response(serialized_project)
+            return create_json_response(serialized_saved_project)
     ## paul's implementation
 
 
