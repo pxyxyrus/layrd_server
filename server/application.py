@@ -270,25 +270,23 @@ def save_project():
                     'error_message': 'Project is not open for applications'
                 }, status_code=400)
 
-            # if applied project is open status, check if application is valid
-            save_application = db.session.query(Application)\
+            # if applied project is open status, check if application is existing and uid matches
+            existing_application = db.session.query(Application)\
                             .filter(Application.project_id==request_data['project_id'])\
+                            .filter(Application.owner_uid == user_info['uid'])\
                             .first()
 
-            # TODO figure out the way to save the application that already saved.
-            # handle cases where the application does not exist or the user is not authorized
-            if save_application is None:
-                return create_json_error_response({
-                    'error_code': 'application_not_found',
-                    'error_message': 'Application is not found'
-                }, status_code=400)
-            elif user_info['uid'] != save_application.onwner_uid:
-                return create_json_error_response({
-                    'error_code': 'unauthorized_access',
-                    'error_message': "User is not authorized to apply to this project"
-                }, status_code=403)
+            # handle cases where save existing application and save new application
+            if existing_application:
+                # update existing saved application with new data from request_data
+                for key, value in request_data.items():
+                    if hasattr(existing_application, key) and key not in ['id', 'post_date']:
+                        setattr(existing_application, key, value)   
+            else:
+                # create a new application instance with the provided data
+                project_application = Application(**request_data)
+                db.session.add(project_application)
             
-            db.session.add(project_application)
         except Exception as e:
             logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
             logger.exception(e)
@@ -296,7 +294,8 @@ def save_project():
             return create_json_error_response(e.args[0])
         else:
             db.session.commit()
-            saved_app_id = project_application.id
+            # prevents from saving duplicated existing application
+            saved_app_id = existing_application.id if existing_application else project_application.id
             db.session.close()
 
             return create_json_response({'Saved Appplication ID': saved_app_id}, status_code=201) 
