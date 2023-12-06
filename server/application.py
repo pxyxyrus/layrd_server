@@ -282,9 +282,14 @@ def save_project():
                 for key, value in request_data.items():
                     if hasattr(existing_application, key) and key not in ['id', 'post_date']:
                         setattr(existing_application, key, value)   
+                
+                # set to application status to saved so user can load the saved application
+                existing_application = ApplicationStatus.saved.value
             else:
                 # create a new application instance with the provided data
                 project_application = Application(**request_data)
+
+                existing_application = ApplicationStatus.saved.value
                 db.session.add(project_application)
             
         except Exception as e:
@@ -328,6 +333,7 @@ def load_project():
                                 .filter(Application.id == request_data['id'])\
                                 .first()
 
+            # catching specific errors
             if saved_application is None:
                 return create_json_error_response({
                     'error_code': 'saved_application_not_found',
