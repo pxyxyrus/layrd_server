@@ -252,6 +252,7 @@ def save_project():
             request_data = request.json['data']
             request_auth_data = request.json['auth']
             user_info = firebase_helper.authenticate(request_auth_data)
+            print(user_info)
             project_application = Application(**request_data)
             db.session.begin()
 
@@ -284,12 +285,11 @@ def save_project():
                         setattr(existing_application, key, value)   
                 
                 # set to application status to saved so user can load the saved application
-                existing_application = ApplicationStatus.saved.value
+                existing_application.status = ApplicationStatus.saved.value
             else:
                 # create a new application instance with the provided data
                 project_application = Application(**request_data)
-
-                existing_application = ApplicationStatus.saved.value
+                project_application.status = ApplicationStatus.saved.value
                 db.session.add(project_application)
             
         except Exception as e:
@@ -320,20 +320,22 @@ def load_project():
             request_data = request.json['data']
             request_auth_data = request.json['auth']
             user_info = firebase_helper.authenticate(request_auth_data)
-
+            print(request_data)
             # check if application id is provided
             if 'id' not in request_data:
                 return create_json_error_response({
-                    'error_code': 'missing_application_id',
-                    'error_message': 'Application ID is required',
+                    'error_code': 'application_not_found',
+                    'error_message': 'Application not found',
                 }, status_code=400)
 
             # query the database
             saved_application = db.session.query(Application)\
                                 .filter(Application.id == request_data['id'])\
+                                .filter(Application.owner_uid == user_info['uid'])\
+                                .filter(Application.status == ApplicationStatus.saved.value)\
                                 .first()
 
-            # catching specific errors
+            # catching specific errors - for maintainability
             if saved_application is None:
                 return create_json_error_response({
                     'error_code': 'saved_application_not_found',
@@ -344,7 +346,7 @@ def load_project():
                     'error_code': 'application_not_in_saved_status',
                     'error_message': 'Application is not in saved status',
                 })
-            elif saved_application.onwner_uid != user_info['uid']:
+            elif saved_application.owner_uid != user_info['uid']:
                 return create_json_error_response({
                     'error_code': 'unauthorized_access',
                     'error_message': "User is not authorized to this application"
@@ -353,11 +355,12 @@ def load_project():
         except Exception as e:
             logger.exception(e)
             db.session.rollback()
-            return create_json_error_response(str(e), status_code=500)         
+            error_message = str(e)  
+            return create_json_error_response(error_message, status_code=500)                
         else:
             # if no errors, then serialize the saved project data and return the response
             serialized_saved_application = saved_application.to_dict()
-
+            print(serialized_saved_application)
             # create_json_response default to 200 code
             return create_json_response(serialized_saved_application)
     ## paul's implementation

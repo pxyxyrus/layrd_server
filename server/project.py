@@ -59,6 +59,9 @@ def upload_project():
                             'error_message': "project status is not saved"
                         })
                     
+            # set the project status to 'open' when submitting - Paul's implementation (ik that default value is open but just in case)
+            proj.status = ProjectStatus.open.value
+
             db.session.add(proj)
         except Exception as e:
             logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
@@ -429,18 +432,19 @@ def load_project():
             # check if project id is provided
             if 'id' not in request_data:
                 return create_json_error_response({
-                    'error_code': 'missing_project_id',
-                    'error_message': 'Project ID is required',
+                    'error_code': 'project_not_found',
+                    'error_message': 'Project not found',
                 }, status_code=400)
 
-            # query the database for retrieving the status == saved project. If no result found then return None.
+            # query the database
             saved_project = db.sessions.query(Project)\
-            .filter(Project.id == request_data['id'])\
-            .filter(Project.status == ProjectStatus.saved.value)\
-            .first()
+                            .filter(Project.id == request_data['id'])\
+                            .filter(Project.owner_uid == user_info['uid'])\
+                            .filter(Project.status == ProjectStatus.saved.value)\
+                            .first()
 
-            # handle cases where the project does not exist or status is not saved or the user is not authorized
-            if save_project is None:
+            # handle cases where the project does not exist or status is not saved or the user is not authorized - for maintainability
+            if saved_project is None:
                 return create_json_error_response({
                     'error_code': 'saved_project_not_found',
                     'error_message': 'Project not found',
