@@ -170,7 +170,7 @@ def get_project(project_id):
             return create_json_response(response_data)
 
 
-
+# this api endpoint is being used both in main and user page, the condition project.status needs to be removed. And handle displaying saved and open projects.
 @project_bp.route('/get_projects', methods=['POST'])
 def get_projects():
     logger.info("/project/get_projects")
@@ -184,7 +184,7 @@ def get_projects():
 
             projects = db.session.query(Project, func.count(Application.id).label('application_count'))\
                 .outerjoin(Application, Project.id == Application.project_id)\
-                .filter(Project.status != ProjectStatus.saved.value)
+                # .filter(Project.status != ProjectStatus.saved.value) 
 
             # if cursor was passed, apply the cursor condition first
             if cursor is not None:
@@ -442,7 +442,7 @@ def load_project():
                             .filter(Project.owner_uid == user_info['uid'])\
                             .filter(Project.status == ProjectStatus.saved.value)\
                             .first()
-
+            print("saved project: ", saved_project)
             # handle cases where the project does not exist or status is not saved or the user is not authorized - for maintainability
             if saved_project is None:
                 return create_json_error_response({
@@ -450,12 +450,12 @@ def load_project():
                     'error_message': 'Project not found',
                 }, status_code=404)
             # status 403 is indicating that the request is acknowledged but refused to authorize
-            elif user_info['uid'] != saved_project.owner_uid:
+            elif saved_project.owner_uid != user_info['uid']:
                 return create_json_error_response({
                     'error_code': 'unauthorized_access',
                     'error_message': "User is not authorized to access this project"
                 }, status_code=403)
-            elif ProjectStatus.saved.value != saved_project.status:
+            elif saved_project.status != ProjectStatus.saved.value:
                 return change_project_status({
                     'error_code': 'saved_project_status_not_saved',
                     'error_message': 'Project status not saved',
@@ -464,7 +464,8 @@ def load_project():
         except Exception as e:
             logger.exception(e)
             db.session.rollback()
-            return create_json_error_response(str(e), status_code=500)
+            error_message = str(e)  
+            return create_json_error_response(error_message, status_code=500) 
 
         else:
             # if no errors, then serialize the saved project data and return the response

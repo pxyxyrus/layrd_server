@@ -360,7 +360,7 @@ def load_project():
         else:
             # if no errors, then serialize the saved project data and return the response
             serialized_saved_application = saved_application.to_dict()
-            print(serialized_saved_application)
+
             # create_json_response default to 200 code
             return create_json_response(serialized_saved_application)
     ## paul's implementation
