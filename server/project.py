@@ -384,28 +384,31 @@ def save_project():
             
             db.session.begin()
 
-            exist_proj = db.session.query(Project).filter(Project.id == request_data['id']).first()
+            exist_proj = db.session.query(Project)\
+                        .filter(Project.owner_uid == user_info['uid'])\
+                        .first()
 
-            # Checking if its validated project
-            if exist_proj is None:
-                return create_json_error_response({
-                    'error_code': 'Project_not_found',
-                    'error_message': 'Project is not found'
-                }, status_code=400)
-            elif user_info['uid'] != exist_proj.owner_uid:
+            # # Checking if its validated project
+            # if exist_proj is None:
+            #     return create_json_error_response({
+            #         'error_code': 'Project_not_found',
+            #         'error_message': 'Project is not found'
+            #     }, status_code=400)
+            if user_info['uid'] != exist_proj.owner_uid or user_info['uid'] != proj.owner_uid:
                 # TODO need to define better errors
-                return create_json_error_response({
+                    return create_json_error_response({
                         'error_code': 'invalid_action_error',
                         'error_message': "not the owner of the project"
                     }, status_code=400)
-            elif exist_proj.status != ProjectStatus.saved.value:
-                # TODO need to define better errors
-                return create_json_error_response({
-                    'error_code': 'invalid_project_status_error',
-                    'error_message': "project status is not saved"
-                })
 
             if exist_proj:
+                if exist_proj.status != ProjectStatus.saved.value:
+                    # TODO need to define better errors
+                    return create_json_error_response({
+                        'error_code': 'invalid_project_status_error',
+                        'error_message': "project status is not saved"
+                    })
+
                 # if no error were found and saved project already exists, update the existing project with retrieved data from frontend
                 for key, value in request_data.items():
                     if hasattr(exist_proj, key) and key not in ['id', 'post_date']:
