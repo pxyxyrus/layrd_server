@@ -252,7 +252,6 @@ def save_project():
             request_data = request.json['data']
             request_auth_data = request.json['auth']
             user_info = firebase_helper.authenticate(request_auth_data)
-            print(user_info)
             project_application = Application(**request_data)
             db.session.begin()
 
@@ -321,6 +320,7 @@ def load_project():
             request_auth_data = request.json['auth']
             user_info = firebase_helper.authenticate(request_auth_data)
             print(request_data)
+
             # check if application id is provided
             if 'id' not in request_data:
                 return create_json_error_response({
@@ -334,14 +334,14 @@ def load_project():
                                 .filter(Application.owner_uid == user_info['uid'])\
                                 .filter(Application.status == ApplicationStatus.saved.value)\
                                 .first()
-
+            print(saved_application)
             # catching specific errors - for maintainability
             if saved_application is None:
                 return create_json_error_response({
                     'error_code': 'saved_application_not_found',
                     'error_message': 'Application not found',
                 })
-            if saved_application.status != ApplicationStatus.saved.value:
+            elif saved_application.status != ApplicationStatus.saved.value:
                 return create_json_error_response({
                     'error_code': 'application_not_in_saved_status',
                     'error_message': 'Application is not in saved status',
