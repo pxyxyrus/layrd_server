@@ -376,40 +376,41 @@ def save_project():
     logger.info("/project/save")
     if request.method == 'POST':
         try:
-            print(request.json['data'])
             request_data = request.json['data']
             request_auth_data = request.json['auth']
             user_info = firebase_helper.authenticate(request_auth_data)
             proj = Project(**request_data)
-            
+
             db.session.begin()
 
-            exist_proj = db.session.query(Project)\
-                        .filter(Project.owner_uid == user_info['uid'])\
-                        .first()
+            # set exist project to null as we don't know if its new project being saved or not
+            exist_proj = None
 
-            # # Checking if its validated project
-            # if exist_proj is None:
-            #     return create_json_error_response({
-            #         'error_code': 'Project_not_found',
-            #         'error_message': 'Project is not found'
-            #     }, status_code=400)
-            if user_info['uid'] != exist_proj.owner_uid or user_info['uid'] != proj.owner_uid:
-                # TODO need to define better errors
-                    return create_json_error_response({
-                        'error_code': 'invalid_action_error',
-                        'error_message': "not the owner of the project"
-                    }, status_code=400)
+            # if id not null then it means that its existing project
+            if 'id' in request_data and request_data['id']:
+                # If 'id' is present and not empty, then try to find the existing project
+                # query the existing project
+                exist_proj = db.session.query(Project)\
+                            .filter(Project.id == request_data['id'])\
+                            .filter(Project.owner_uid == user_info['uid'])\
+                            .first()
+
+            # if exist saved project found in db, check uid matches or not. Or check current project's uid
+            if (exist_proj and exist_proj.owner_uid != user_info['uid']) or proj.owner_uid != user_info['uid']:
+                return create_json_error_response({
+                    'error_code': 'not_authorized_user',
+                    'error_message': "not the owner of the project"
+                }, status_code=400)
+            # if exist saved project found in db, check status saved or not
+            elif exist_proj and exist_proj.status != ProjectStatus.saved.value:
+                return create_json_error_response({
+                    'error_code': 'invalid_project_status_error',
+                    'error_message': "project status is already submitted"
+                })
 
             if exist_proj:
-                if exist_proj.status != ProjectStatus.saved.value:
-                    # TODO need to define better errors
-                    return create_json_error_response({
-                        'error_code': 'invalid_project_status_error',
-                        'error_message': "project status is not saved"
-                    })
-
                 # if no error were found and saved project already exists, update the existing project with retrieved data from frontend
+                # this will avoid adding duplicated project to db
                 for key, value in request_data.items():
                     if hasattr(exist_proj, key) and key not in ['id', 'post_date']:
                         setattr(exist_proj, key, value)  
@@ -430,6 +431,7 @@ def save_project():
             proj_id = exist_proj.id if exist_proj else proj.id
             db.session.close() 
 
+            # create new id for new proj or keep the existing proj id for one that's already existing
             return create_json_response({'id': proj_id}, status_code=201) 
 
 
