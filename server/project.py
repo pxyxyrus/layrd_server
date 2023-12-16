@@ -58,9 +58,6 @@ def upload_project():
                             'error_code': 'invalid_project_status_error',
                             'error_message': "project status is not saved"
                         })
-                    
-            # set the project status to 'open' when submitting - Paul's implementation (ik that default value is open but just in case)
-            proj.status = ProjectStatus.open.value
 
             db.session.add(proj)
         except Exception as e:
@@ -388,29 +385,35 @@ def save_project():
 
             # if id not null then it means that its existing project
             if 'id' in request_data and request_data['id']:
-                # If 'id' is present and not empty, then try to find the existing project
-                # query the existing project
+                # If 'id' is present and not empty, then try to find the existing project - query the existing project
                 exist_proj = db.session.query(Project)\
                             .filter(Project.id == request_data['id'])\
                             .filter(Project.owner_uid == user_info['uid'])\
                             .first()
+                
+                if not exist_proj:
+                    # either the project doesn't exist or the user is not authorized
+                    return create_json_error_response({
+                        'error_code': 'not_authorized_or_nonexistent_project',
+                        'error_message': "Project not found or user not authorized"
+                    }, status_code=400)
 
-            # if exist saved project found in db, check uid matches or not. Or check current project's uid
+                # if exist saved project found in db, check status saved or not
+                elif exist_proj.status != ProjectStatus.saved.value:
+                    return create_json_error_response({
+                        'error_code': 'invalid_project_status_error',
+                        'error_message': "project status is already submitted"
+                    })
+
+            # if exist saved project found in db, check uid matches or not. Or check current project's uid - this is redundant but i think its good to keep track
             if (exist_proj and exist_proj.owner_uid != user_info['uid']) or proj.owner_uid != user_info['uid']:
                 return create_json_error_response({
                     'error_code': 'not_authorized_user',
                     'error_message': "not the owner of the project"
                 }, status_code=400)
-            # if exist saved project found in db, check status saved or not
-            elif exist_proj and exist_proj.status != ProjectStatus.saved.value:
-                return create_json_error_response({
-                    'error_code': 'invalid_project_status_error',
-                    'error_message': "project status is already submitted"
-                })
 
             if exist_proj:
                 # if no error were found and saved project already exists, update the existing project with retrieved data from frontend
-                # this will avoid adding duplicated project to db
                 for key, value in request_data.items():
                     if hasattr(exist_proj, key) and key not in ['id', 'post_date']:
                         setattr(exist_proj, key, value)  
@@ -428,10 +431,9 @@ def save_project():
             return create_json_error_response(e.args[0])
         else:
             db.session.commit()
+            # create new id for new proj or keep the existing proj id for one already existing
             proj_id = exist_proj.id if exist_proj else proj.id
             db.session.close() 
-
-            # create new id for new proj or keep the existing proj id for one that's already existing
             return create_json_response({'id': proj_id}, status_code=201) 
 
 
@@ -457,26 +459,20 @@ def load_project():
             saved_project = db.session.query(Project)\
                             .filter(Project.id == request_data['id'])\
                             .filter(Project.owner_uid == user_info['uid'])\
-                            .filter(Project.status == ProjectStatus.saved.value)\
                             .first()
 
-            # handle cases where the project does not exist or status is not saved or the user is not authorized - for maintainability
-            if saved_project is None:
+            # handle cases where the project does not exist or status is not saved or the user is not authorized
+            if not saved_project:
                 return create_json_error_response({
-                    'error_code': 'saved_project_not_found',
-                    'error_message': 'Project not found',
-                })
+                    'error_code': 'project_access_error',
+                    'error_message': 'Project not found or access denied or project status not saved',
+                }, status_code=400)
+
             elif saved_project.status != ProjectStatus.saved.value:
-                return change_project_status({
-                    'error_code': 'saved_project_status_not_saved',
-                    'error_message': 'Project status not saved',
-                })
-            # status 403 is indicating that the request acknowledged but auth failed
-            elif saved_project.owner_uid != user_info['uid']:
                 return create_json_error_response({
-                    'error_code': 'unauthorized_access',
-                    'error_message': "User is not authorized to access this project"
-                }, status_code=403)
+                    'error_code': 'project_not_in_saved_status',
+                    'error_message': 'Project is not in saved status',
+                })
 
         except Exception as e:
             logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
@@ -491,7 +487,4 @@ def load_project():
             # create_json_response default to 200 code
             return create_json_response(serialized_saved_project)
     ## paul's implementation
-
-
-
     pass
