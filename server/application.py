@@ -299,7 +299,7 @@ def save_project():
             if existing_application:
                 # update existing saved application with new data from request_data
                 for key, value in request_data.items():
-                    if hasattr(existing_application, key) and key not in ['id', 'post_date']:
+                    if hasattr(existing_application, key) and key not in ['id', 'created_at']:
                         setattr(existing_application, key, value)   
                 
                 # set to application status to saved so user can load the saved application
@@ -322,9 +322,7 @@ def save_project():
             db.session.close()
 
             return create_json_response({'Saved Appplication ID': saved_app_id}, status_code=201) 
-
     ## paul's implementation
-    pass 
 
 
 
@@ -374,5 +372,3 @@ def load_project():
             # create_json_response default to 200 code
             return create_json_response(serialized_saved_application)
     ## paul's implementation
-
-    pass

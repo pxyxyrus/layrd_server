@@ -415,7 +415,7 @@ def save_project():
             if exist_proj:
                 # if no error were found and saved project already exists, update the existing project with retrieved data from frontend
                 for key, value in request_data.items():
-                    if hasattr(exist_proj, key) and key not in ['id', 'post_date']:
+                    if hasattr(exist_proj, key) and key not in ['id', 'created_at']:
                         setattr(exist_proj, key, value)  
                 exist_proj.status = ProjectStatus.saved.value
             else:
