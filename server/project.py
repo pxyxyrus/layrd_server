@@ -184,7 +184,7 @@ def get_projects():
 
             projects = db.session.query(Project, func.count(Application.id).label('application_count'))\
                 .outerjoin(Application, Project.id == Application.project_id)\
-                # .filter(Project.status != ProjectStatus.saved.value) ## Paul - maybe we can handle this in frontend?
+                .filter(Project.status != ProjectStatus.saved.value)
 
             # if cursor was passed, apply the cursor condition first
             if cursor is not None:
@@ -198,7 +198,6 @@ def get_projects():
             projects = projects.group_by(Project.id)\
                 .limit(25)\
                 .all()
-
 
         except Exception as e:
             logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
@@ -217,6 +216,48 @@ def get_projects():
             return create_json_response(response_data)
         
 
+@project_bp.route('/get_saved_projects', methods=['POST'])
+def get_saved_projects():
+    logger.info("/project/get_saved_projects")
+    if request.method == 'POST':
+        try:
+            request_data = request.json['data']
+            request_auth_data = request.json['auth']
+            db.session.begin()
+            user_info = firebase_helper.authenticate(request_auth_data)
+
+            cursor = request_data.pop('cursor', None)
+
+            projects_query = db.session.query(Project)\
+                .filter(Project.status == 'saved')\
+                .filter(Project.owner_uid == user_info['uid'])
+
+            if cursor is not None:
+                projects_query = projects_query.filter(Project.created_at > cursor)
+
+            for key, value in request_data.items():
+                projects_query = projects_query.filter(getattr(Project, key) == value)
+
+            projects = projects_query.limit(25).all()
+
+            if not projects:
+                return create_json_error_response({
+                    'error_code': 'no_existing_saved_projects',
+                    'error_message': "There's no existing saved projects"
+                }, status_code=404)
+
+        except Exception as e:
+            logger.error(f"request_data : {json.dumps(request_data, indent=0)}")
+            logger.exception(e)
+            db.session.rollback()
+            return create_json_error_response(e.args[0])
+        else:
+            response_data = []
+            if projects is not None:
+                for p in projects:
+                    response_data.append(p.to_dict())
+            db.session.commit()
+            return create_json_response(response_data)
 
 @project_bp.route('/select_application', methods=['POST'])
 def select_application():
