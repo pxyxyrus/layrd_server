@@ -25,7 +25,8 @@ def upgrade() -> None:
     from server.types import RecruitmentType
     from server.types import ApplicationType
     from server.types import WorkLocation
-
+ 
+    op.alter_column(table_name, "city", nullable=True, existing_type=sa.String(255), existing_nullable=False)
     op.alter_column(table_name, "state", nullable=True, existing_type=sa.String(2), existing_nullable=False)
     op.alter_column(table_name, "recruitment_type", nullable=True, existing_type=sa.Enum(RecruitmentType), existing_nullable=False)
     op.alter_column(table_name, "app_type", nullable=True, existing_type=sa.Enum(ApplicationType), existing_nullable=False)
@@ -68,6 +69,7 @@ def downgrade() -> None:
     op.alter_column(table_name, "app_type", nullable=False, existing_type=sa.Enum(ApplicationType), existing_nullable=True)
     op.alter_column(table_name, "recruitment_type", nullable=False, existing_type=sa.Enum(RecruitmentType), existing_nullable=True)
     op.alter_column(table_name, "state", nullable=False, existing_type=sa.String(2), existing_nullable=True)
+    op.alter_column(table_name, "name", nullable=False, existing_type=sa.String(255), existing_nullable=True)
 
 
 
