@@ -306,8 +306,6 @@ def save_project():
                 existing_application.status = ApplicationStatus.saved.value
             else:
                 # if no existing app, create a new application instance with the provided data
-                project_application = Application(**request_data)
-                project_application.status = ApplicationStatus.saved.value
                 db.session.add(project_application)
             
         except Exception as e:
@@ -322,7 +320,7 @@ def save_project():
             db.session.close()
 
             return create_json_response({'Saved Appplication ID': saved_app_id}, status_code=201) 
-    ## paul's implementation
+
 
 
 
@@ -371,4 +369,3 @@ def load_project():
 
             # create_json_response default to 200 code
             return create_json_response(serialized_saved_application)
-    ## paul's implementation
