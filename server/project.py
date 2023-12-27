@@ -52,7 +52,7 @@ def upload_project():
                                 'error_code': 'invalid_action_error',
                                 'error_message': "not the owner of the project"
                             }, status_code=400)
-                    elif exist_proj.status != ProjectStatus.saved.value:
+                    if exist_proj.status != ProjectStatus.saved.value:
                         # TODO need to define better errors
                         return create_json_error_response({
                             'error_code': 'invalid_project_status_error',
@@ -220,20 +220,21 @@ def get_saved_projects():
         try:
             request_data = request.json['data']
             request_auth_data = request.json['auth']
-            db.session.begin()
             user_info = firebase_helper.authenticate(request_auth_data)
 
             cursor = request_data.pop('cursor', None)
+
+            db.session.begin()
 
             projects_query = db.session.query(Project)\
                 .filter(Project.status == 'saved')\
                 .filter(Project.owner_uid == user_info['uid'])
 
             if cursor is not None:
-                projects_query = projects_query.filter(Project.created_at > cursor)
+                projects_query = projects_query.filter(Project.id > cursor)
 
             for key, value in request_data.items():
-                projects_query = projects_query.filter(getattr(Project, key) == value)
+                projects_query = projects_query.filter(key == value)
 
             projects = projects_query.limit(25).all()
 
@@ -280,7 +281,7 @@ def select_application():
                         'error_code': 'invalid_action_error',
                         'error_message': "not the owner of the project"
                     }, status_code=400)
-            elif project.status != ProjectStatus.open.value:
+            if project.status != ProjectStatus.open.value:
                 # TODO need to define better errors
                 return create_json_error_response({
                     'error_code': 'invalid_project_status_error',
@@ -343,7 +344,6 @@ def start_project():
             db.session.begin()
             project = db.session.query(Project)\
                 .filter(Project.id==project_id)\
-                .limit(25)\
                 .first()
             
             if user_info['uid'] != project.owner_uid:
@@ -352,7 +352,7 @@ def start_project():
                         'error_code': 'invalid_action_error',
                         'error_message': "not the owner of the project"
                     }, status_code=400)
-            elif project.status != ProjectStatus.open.value:
+            if project.status != ProjectStatus.open.value:
                 # TODO need to define better errors
                 return create_json_error_response({
                     'error_code': 'invalid_project_status_error',
@@ -429,7 +429,6 @@ def save_project():
                 # If 'id' is present and not empty, then try to find the existing project - query the existing project
                 exist_proj = db.session.query(Project)\
                             .filter(Project.id == request_data['id'])\
-                            .filter(Project.owner_uid == user_info['uid'])\
                             .first()
                 
                 if not exist_proj:
@@ -440,29 +439,26 @@ def save_project():
                     }, status_code=400)
 
                 # if exist saved project found in db, check status saved or not
-                elif exist_proj.status != ProjectStatus.saved.value:
+                if exist_proj.status != ProjectStatus.saved.value:
                     return create_json_error_response({
                         'error_code': 'invalid_project_status_error',
                         'error_message': "project status is already submitted"
                     })
+                
+                if exist_proj.owner_uid != user_info['uid']:
+                    return create_json_error_response({
+                        'error_code': 'invalid_project_owner_error',
+                        'error_message': "project owner is not the same as the user"
+                    })
 
-            # if exist saved project found in db, check uid matches or not. Or check current project's uid - this is redundant but i think its good to keep track
-            if (exist_proj and exist_proj.owner_uid != user_info['uid']) or proj.owner_uid != user_info['uid']:
-                return create_json_error_response({
-                    'error_code': 'not_authorized_user',
-                    'error_message': "not the owner of the project"
-                }, status_code=400)
-
+            
             if exist_proj:
                 # if no error were found and saved project already exists, update the existing project with retrieved data from frontend
                 for key, value in request_data.items():
                     if hasattr(exist_proj, key) and key not in ['id', 'created_at']:
-                        setattr(exist_proj, key, value)  
-                exist_proj.status = ProjectStatus.saved.value
+                        setattr(exist_proj, key, value)
             else:
                 # if no existing project, then save a new project
-                proj = Project(**request_data)
-                proj.status = ProjectStatus.saved.value
                 db.session.add(proj)
 
         except Exception as e:
@@ -509,7 +505,7 @@ def load_project():
                     'error_message': 'Project not found or access denied or project status not saved',
                 }, status_code=400)
 
-            elif saved_project.status != ProjectStatus.saved.value:
+            if saved_project.status != ProjectStatus.saved.value:
                 return create_json_error_response({
                     'error_code': 'project_not_in_saved_status',
                     'error_message': 'Project is not in saved status',
@@ -524,8 +520,7 @@ def load_project():
         else:
             # if no errors, then serialize the saved project data and return the response
             serialized_saved_project = saved_project.to_dict()
+            db.session.commit()
 
             # create_json_response default to 200 code
             return create_json_response(serialized_saved_project)
-    ## paul's implementation
-    pass
