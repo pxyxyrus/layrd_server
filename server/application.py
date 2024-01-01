@@ -312,8 +312,11 @@ def save_project():
                 for key, value in request_data.items():
                     if hasattr(existing_application, key) and key not in ['id', 'created_at']:
                         setattr(existing_application, key, value)
+
+                existing_application.status = ApplicationStatus.saved.value
             else:
                 # if no existing app, create a new application instance with the provided data
+                project_application.status = ApplicationStatus.saved.value
                 db.session.add(project_application)
             
         except Exception as e:

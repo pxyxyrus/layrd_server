@@ -471,8 +471,17 @@ def save_project():
                 for key, value in request_data.items():
                     if hasattr(exist_proj, key) and key not in ['id', 'created_at']:
                         setattr(exist_proj, key, value)
+                exist_proj.status = ProjectStatus.saved.value
             else:
+                # check if permitted user saved a new project - uid is still being passed so i think we'll need to check (please give me a feedback on this)
+                if proj.owner_uid != user_info['uid']:
+                    return create_json_error_response({
+                        'error_code': 'Not_permitted_user_saved_project',
+                        'error_message': "Not permitted user saved a new project"
+                    })
+
                 # if no existing project, then save a new project
+                proj.status = ProjectStatus.saved.value
                 db.session.add(proj)
 
         except Exception as e:
