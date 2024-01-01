@@ -220,36 +220,19 @@ def get_saved_projects():
         try:
             request_data = request.json['data']
             request_auth_data = request.json['auth']
-<<<<<<< HEAD
-            db.session.begin()
-=======
->>>>>>> 4fd08f004652cf7c8d728d74f26d8e0cf22bd4b6
             user_info = firebase_helper.authenticate(request_auth_data)
-
             cursor = request_data.pop('cursor', None)
-
-<<<<<<< HEAD
-=======
             db.session.begin()
 
->>>>>>> 4fd08f004652cf7c8d728d74f26d8e0cf22bd4b6
             projects_query = db.session.query(Project)\
                 .filter(Project.status == 'saved')\
                 .filter(Project.owner_uid == user_info['uid'])
 
             if cursor is not None:
-<<<<<<< HEAD
-                projects_query = projects_query.filter(Project.created_at > cursor)
-
-            for key, value in request_data.items():
-                projects_query = projects_query.filter(getattr(Project, key) == value)
-=======
                 projects_query = projects_query.filter(Project.id > cursor)
 
             for key, value in request_data.items():
                 projects_query = projects_query.filter(key == value)
->>>>>>> 4fd08f004652cf7c8d728d74f26d8e0cf22bd4b6
-
             projects = projects_query.limit(25).all()
 
             if not projects:
