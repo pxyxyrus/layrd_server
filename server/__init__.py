@@ -10,8 +10,7 @@ db = SQLAlchemy()
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
     logger.info("Flask app created")
-    # CORS(app)
-    CORS(app, resources={r"*": {"origins": "http://localhost:3000"}})
+    CORS(app)
 
     app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://{}:{}@{}/{}'.format(
         config['database']['username'],
