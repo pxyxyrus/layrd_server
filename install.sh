@@ -1,9 +1,5 @@
-python3 -m venv .venv
-
-source $PWD/.venv/bin/activate
-
-
-
 pip install --upgrade pip
+
+python3 -m pip install --upgrade setuptools
 
 pip install -r requirements.txt
